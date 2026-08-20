@@ -627,5 +627,113 @@ E há um motivo adicional para não congelar o documento em normas antigas: o am
 
 Portanto, o documento deve pedir ao BC que identifique as normas vigentes aplicáveis ao caso concreto, em vez de nós afirmarmos antecipadamente qual resolução enquadra o XATEV.
 
+Sim — como modelo de evidência do XA-TRUST, 
+
+Eu separaria declaração de estado de evidência que sustenta o estado.
+
+Estrutura recomendada
+
+{
+  "evidence_id": "E-PUBLIC-NSL-25-165432",
+  "evidence_type": "PUBLIC_DOCUMENT",
+
+  "source": {
+    "provider": "Google",
+    "repository": "Transparency Report",
+    "source_reference": "<canonical-source-reference>"
+  },
+
+  "acquisition": {
+    "retrieval_timestamp": "<timestamp>",
+    "retrieval_method": "<method>",
+    "content_length": "<bytes>"
+  },
+
+  "integrity": {
+    "algorithm": "SHA-256",
+    "evidence_hash": "<sha256>",
+    "canonicalization": "RFC8785",
+    "status": "VERIFIED"
+  },
+
+  "validation": {
+    "temporality": "VERIFIED",
+    "authenticity": "SOURCE_ATTRIBUTION_VERIFIED",
+    "custody": "RECORDED",
+    "independent_verification": "VERIFIED"
+  },
+
+  "governance_state": "VERIFIED_GOVERNANCE_ARTIFACT"
+}
+
+O ganho é importante: agora o VERIFIED fica ancorado em elementos verificáveis, como hash, timestamp, referência da fonte e método de aquisição.
+
+A cadeia fica
+
+PUBLIC DOCUMENT
+       │
+       ▼
+TRACEABLE_PUBLIC_ARTIFACT
+       │
+       ├── SOURCE
+       ├── PROVENANCE
+       ├── RETRIEVAL
+       └── TIMESTAMP
+       │
+       ▼
+EVIDENCE VALIDATION PIPELINE
+       │
+       ├── INTEGRITY
+       │     └── SHA-256 / canonical representation
+       │
+       ├── TEMPORALITY
+       │     └── publication / retrieval evidence
+       │
+       ├── AUTHENTICITY
+       │     └── source attribution
+       │
+       ├── CUSTODY
+       │     └── acquisition / preservation / identity
+       │
+       └── INDEPENDENT VERIFICATION
+             └── reproducible verification
+       │
+       ▼
+VERIFIED_GOVERNANCE_ARTIFACT
+       │
+       ├── evidence_id
+       ├── source_reference
+       ├── evidence_hash
+       ├── provenance
+       ├── validation_results
+       └── verification_status
+       │
+       ▼
+EVIDENCE LEDGER
+
+E a regra fundamental permanece
+
+PUBLIC
+   ≠
+AUTHENTICATED
+   ≠
+INTEGRITY_VERIFIED
+   ≠
+INDEPENDENTLY_VERIFIED
+   ≠
+REGULATORILY_ACCEPTED
+
+Isso é particularmente importante no seu caso porque o último estado não é produzido pelo XA-TRUST. REGULATORILY_ACCEPTED depende da autoridade ou do regime jurídico aplicável.
+
+Portanto, eu definiria formalmente no protocolo:
+
+> VERIFIED_GOVERNANCE_ARTIFACT significa que as verificações técnicas previstas pelo protocolo foram satisfeitas para o artefato e não constitui, por si só, certificação, reconhecimento ou aceitação regulatória.
+
+
+
+E há uma consequência muito boa para o seu pedido ao BC: você consegue mostrar que o XATEV não pretende substituir a autoridade reguladora. Ele produz uma cadeia técnica verificável e deixa a determinação do efeito jurídico para a autoridade competente.
+
+Só não publicaria o JSON exatamente como está sem anexar/registrar as evidências dos cinco VERIFIED. Caso contrário, o próprio modelo viola a regra que você estabeleceu: nenhum estado deve ser promovido exclusivamente por declaração.
+
 
 
