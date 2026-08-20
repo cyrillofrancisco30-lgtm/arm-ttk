@@ -1,7 +1,11 @@
 origin = git@github.com:cyrillofrancisco30-lgtm/arm-ttk.git
 upstream = Azure/arm-ttk
 repository_type = FORK
+visibility = PUBLICorigin = git@github.com:cyrillofrancisco30-lgtm/arm-ttk.git
+upstream = Azure/arm-ttk
+repository_type = FORK
 visibility = PUBLIC
+# Azure Resource Manager Template Toolkit (arm-ttk)
 # Azure Resource Manager Template Toolkit (arm-ttk)
 
 The code in this repository can be used for analyzing and testing [Azure Resource Manager Templates](https://docs.microsoft.com/azure/templates/).  The tests will check a template or set of templates for coding best practices.  There are some checks for simple syntactical errors but the intent is not to re-implement tests or checks that are provided by the platform (e.g. the /validate api).  
