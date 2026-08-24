@@ -1702,5 +1702,585 @@ E há uma consequência muito boa para o seu pedido ao BC: você consegue mostra
 
 Só não publicaria o JSON exatamente como está sem anexar/registrar as evidências dos cinco VERIFIED. Caso contrário, o próprio modelo viola a regra que você estabeleceu: nenhum estado deve ser promovido exclusivamente por declaração.
 
+Sim. Com essa estrutura você já tem os elementos para implementar um pipeline executável de Evidence → Verification → Trust, mas eu faria uma correção arquitetural importante:
+
+> trust_status não deve ser entrada. Deve ser saída calculada pelo verifier.
+
+
+
+E, idealmente, decision.result também deve ser tratada como claim a ser verificada, não como fato confiável.
+
+1. Arquitetura de implementação
+
+Eu implementaria assim:
+
+┌──────────────────────┐
+                    │ DECLARATIVE_ARTIFACT │
+                    └──────────┬───────────┘
+                               ↓
+                         SOURCE COMMIT
+                               ↓
+                         BUILD EXECUTION
+                               ↓
+                      ARTIFACT + SBOM
+                               ↓
+                     RUNTIME ATTESTATION
+                               ↓
+                       DECISION EXECUTION
+                               ↓
+                    ┌──────────────────────┐
+                    │ EVIDENCE COLLECTOR   │
+                    └──────────┬───────────┘
+                               ↓
+                         DEP BUILDER
+                               ↓
+                         RFC8785 / JCS
+                               ↓
+                           SHA-256
+                               ↓
+                       MERKLE AGGREGATION
+                               ↓
+                       EVIDENCE LEDGER
+                               ↓
+                  ┌────────────────────────┐
+                  │ INDEPENDENT VERIFIER   │
+                  └────────────┬───────────┘
+                               ↓
+                    ┌──────────────────────┐
+                    │ VERIFICATION RESULT  │
+                    └────────────┬─────────┘
+                               ↓
+                         TRUST POLICY
+                               ↓
+                    TRUST_STATUS = VERIFIED
+
+A regra seria:
+
+VERIFIED ⇔
+    source_verification == PASS
+AND build_verification == PASS
+AND artifact_verification == PASS
+AND cryptographic_verification == PASS
+AND ledger_verification == PASS
+AND replay_verification == MATCH
+
+Mas eu acrescentaria uma condição:
+
+AND semantic_verification == PASS
+
+porque integridade criptográfica não demonstra, sozinha, que a decisão é semanticamente correta.
+
+
+---
+
+2. Separe os componentes
+
+Uma estrutura de repositório poderia ser:
+
+xa-trust/
+│
+├── src/
+│   ├── canonicalization/
+│   │   └── rfc8785.py
+│   │
+│   ├── hashing/
+│   │   └── sha256.py
+│   │
+│   ├── evidence/
+│   │   ├── collector.py
+│   │   ├── dep_builder.py
+│   │   └── schema.py
+│   │
+│   ├── provenance/
+│   │   ├── source_verifier.py
+│   │   ├── build_verifier.py
+│   │   └── artifact_verifier.py
+│   │
+│   ├── cryptography/
+│   │   ├── signature.py
+│   │   └── merkle.py
+│   │
+│   ├── ledger/
+│   │   ├── append.py
+│   │   └── verify.py
+│   │
+│   ├── replay/
+│   │   └── engine.py
+│   │
+│   ├── verification/
+│   │   ├── verifier.py
+│   │   └── result.py
+│   │
+│   └── policy/
+│       └── trust_policy.py
+│
+├── schemas/
+│   ├── evidence-package.json
+│   ├── verification-result.json
+│   └── trust-policy.json
+│
+├── tests/
+│   ├── test_canonicalization.py
+│   ├── test_integrity.py
+│   ├── test_provenance.py
+│   ├── test_ledger.py
+│   ├── test_replay.py
+│   └── test_verifier.py
+│
+└── .github/workflows/
+    ├── ci.yml
+    └── evidence.yml
+
+
+---
+
+3. O DEP deve ser o objeto central
+
+Eu faria o DEP representar evidências, e não simplesmente copiar o resultado da decisão.
+
+Por exemplo:
+
+{
+  "dep_version": "1.0",
+  "dep_id": "DEP-2026-001",
+
+  "subject": {
+    "request_id": "REQ-2026-001",
+    "decision_id": "DEC-2026-001"
+  },
+
+  "source": {
+    "repository": "xa-banking-core",
+    "commit_sha": "abc123...",
+    "source_hash": "sha256:..."
+  },
+
+  "build": {
+    "build_id": "BUILD-2026-001",
+    "builder": "github-actions",
+    "build_hash": "sha256:..."
+  },
+
+  "artifact": {
+    "name": "xa-banking-core",
+    "version": "9.6",
+    "digest": "sha256:..."
+  },
+
+  "runtime": {
+    "environment": "production",
+    "runtime_id": "runtime-...",
+    "image_digest": "sha256:...",
+    "observed_at": "2026-08-24T..."
+  },
+
+  "model": {
+    "model_id": "risk-engine",
+    "model_version": "2.1",
+    "model_hash": "sha256:..."
+  },
+
+  "policy": {
+    "policy_id": "policy-2026.07",
+    "policy_hash": "sha256:..."
+  },
+
+  "decision_claim": {
+    "result": "APPROVED"
+  }
+}
+
+Observe que cada elemento possui sua própria identidade.
+
+
+---
+
+4. Não confie no artifact_hash fornecido pelo próprio executor
+
+Esse ponto é crítico.
+
+Não faça:
+
+executor
+   ↓
+"artifact_hash": "sha256:..."
+   ↓
+VERIFIED
+
+Faça:
+
+artifact bytes
+      ↓
+XA-TRUST canonical representation
+      ↓
+SHA-256
+      ↓
+COMPUTED_ARTIFACT_HASH
+      ↓
+compare
+      ↓
+DECLARED_ARTIFACT_HASH
+
+Resultado:
+
+COMPUTED == DECLARED
+        ↓
+ARTIFACT_INTEGRITY = PASS
+
+Caso contrário:
+
+COMPUTED != DECLARED
+        ↓
+ARTIFACT_INTEGRITY = FAIL
+        ↓
+TRUST_STATUS = UNTRUSTED
+
+
+---
+
+5. Proveniência deve ser uma cadeia
+
+Para seu caso:
+
+commit
+  ↓
+build
+  ↓
+artifact
+  ↓
+deployment
+  ↓
+runtime
+  ↓
+decision
+
+Cada transição precisa ser vinculada.
+
+Exemplo:
+
+{
+  "provenance": {
+    "source_commit": "abc123",
+    "build_id": "BUILD-001",
+    "artifact_digest": "sha256:...",
+    "deployment_id": "DEPLOY-001",
+    "runtime_id": "RUNTIME-001"
+  }
+}
+
+O verifier então verifica:
+
+commit → build       PASS
+build → artifact     PASS
+artifact → runtime   PASS
+runtime → decision   PASS
+
+Não basta provar que cada objeto existe individualmente.
+
+É necessário provar o binding entre eles.
+
+
+---
+
+6. Ledger
+
+Cada DEP pode gerar um registro imutável:
+
+{
+  "ledger_index": 1001,
+  "dep_id": "DEP-2026-001",
+  "previous_hash": "sha256:...",
+  "dep_hash": "sha256:...",
+  "merkle_root": "sha256:...",
+  "timestamp": "2026-08-24T20:00:00Z"
+}
+
+Então:
+
+BLOCK[n-1]
+    │
+    │ previous_hash
+    ▼
+BLOCK[n]
+    │
+    ▼
+DEP_HASH
+    │
+    ▼
+MERKLE_ROOT
+
+O verifier recalcula:
+
+previous_hash
+        +
+canonical_dep
+        +
+merkle_root
+        ↓
+EXPECTED_LEDGER_STATE
+
+e compara com o ledger observado.
+
+
+---
+
+7. Replay é o último teste realmente interessante
+
+O replay não deve simplesmente perguntar:
+
+"replay": "MATCH"
+
+Ele deve reconstruir a decisão a partir dos inputs relevantes.
+
+Conceitualmente:
+
+replayed = replay_engine(
+    input_evidence=dep.inputs,
+    model=model_artifact,
+    policy=policy_artifact,
+    configuration=config
+)
+
+observed = dep.decision_claim
+
+if replayed.result == observed.result:
+    replay_verification = "MATCH"
+else:
+    replay_verification = "MISMATCH"
+
+Isso permite distinguir:
+
+EXECUTION_OBSERVED
+        ≠
+EXECUTION_REPRODUCED
+
+e:
+
+REPLAY_MATCH
+        ≠
+TRUSTED
+
+O MATCH é apenas uma condição da política final.
+
+
+---
+
+8. O Verifier deve ser determinístico
+
+Eu faria o núcleo aproximadamente assim:
+
+def verify(dep, evidence, policy):
+
+    checks = {}
+
+    checks["source_verification"] = verify_source(
+        evidence.source
+    )
+
+    checks["build_verification"] = verify_build(
+        evidence.source,
+        evidence.build
+    )
+
+    checks["artifact_verification"] = verify_artifact(
+        evidence.build,
+        evidence.artifact
+    )
+
+    checks["cryptographic_verification"] = verify_crypto(
+        evidence
+    )
+
+    checks["ledger_verification"] = verify_ledger(
+        evidence.ledger,
+        dep
+    )
+
+    checks["replay_verification"] = verify_replay(
+        dep,
+        evidence
+    )
+
+    checks["semantic_verification"] = verify_semantics(
+        dep,
+        evidence
+    )
+
+    trust_status = evaluate_policy(
+        checks,
+        policy
+    )
+
+    return {
+        "checks": checks,
+        "trust_status": trust_status
+    }
+
+E nunca:
+
+trust_status = dep["trust_status"]
+
+
+---
+
+9. O resultado deve ser um artefato derivado
+
+O seu JSON final poderia ser:
+
+{
+  "verification_result_version": "1.0",
+
+  "subject": {
+    "request_id": "REQ-2026-001",
+    "decision_id": "DEC-2026-001"
+  },
+
+  "verified_evidence": {
+    "dep_id": "DEP-2026-001",
+    "dep_hash": "sha256:..."
+  },
+
+  "checks": {
+    "source_verification": "PASS",
+    "build_verification": "PASS",
+    "artifact_verification": "PASS",
+    "cryptographic_verification": "PASS",
+    "ledger_verification": "PASS",
+    "replay_verification": "MATCH",
+    "semantic_verification": "PASS"
+  },
+
+  "verifier": {
+    "name": "xa-trust-verifier",
+    "version": "1.0.0"
+  },
+
+  "trust_status": "VERIFIED"
+}
+
+Perceba que trust_status aparece somente aqui.
+
+
+---
+
+10. A política pode ser explicitamente formalizada
+
+Por exemplo:
+
+def trust_policy(c):
+
+    required = (
+        c["source_verification"] == "PASS"
+        and c["build_verification"] == "PASS"
+        and c["artifact_verification"] == "PASS"
+        and c["cryptographic_verification"] == "PASS"
+        and c["ledger_verification"] == "PASS"
+        and c["replay_verification"] == "MATCH"
+        and c["semantic_verification"] == "PASS"
+    )
+
+    return "VERIFIED" if required else "UNTRUSTED"
+
+Isso cria uma propriedade extremamente importante:
+
+VERIFICATION_RESULT
+        ↓
+deterministic
+        ↓
+recomputable
+        ↓
+independently verifiable
+
+
+---
+
+11. E eu adicionaria INSUFFICIENT_EVIDENCE
+
+Não use apenas:
+
+VERIFIED
+UNVERIFIED
+
+Sugiro pelo menos:
+
+VERIFIED
+UNTRUSTED
+INSUFFICIENT_EVIDENCE
+INVALID
+
+Exemplo:
+
+workflow exists
+       +
+commit exists
+       +
+artifact exists
+       -
+no concrete runtime binding
+       ↓
+INSUFFICIENT_EVIDENCE
+
+Isso é muito melhor do que transformar automaticamente ausência de evidência em FAIL.
+
+
+---
+
+12. A propriedade final
+
+A implementação inteira pode ser reduzida a este princípio:
+
+CLAIM
+                   │
+                   ▼
+              EVIDENCE SET
+                   │
+        ┌──────────┼───────────┐
+        ▼          ▼           ▼
+     Integrity  Provenance  Semantics
+        │          │           │
+        └──────────┼───────────┘
+                   ▼
+              Replay/Binding
+                   │
+                   ▼
+         INDEPENDENT VERIFIER
+                   │
+                   ▼
+          VERIFICATION_RESULT
+                   │
+                   ▼
+              TRUST POLICY
+                   │
+                   ▼
+                VERIFIED
+
+Ou, formalmente:
+
+\[
+TRUSTED(E) \iff
+I(E)\land P(E)\land A(E)\land C(E)\land L(E)\land R(E)\land S(E)
+\]
+
+onde:
+
+\(I\) = integrity
+
+\(P\) = provenance
+
+\(A\) = artifact/build authenticity
+
+\(C\) = cryptographic verification
+
+\(L\) = ledger verification
+
+\(R\) = replay match
+
+\(S\) = semantic validation
+
+
+A decisão não causa VERIFIED; as evidências verificadas causam VERIFIED.
+
+Esse é o ponto em que o seu modelo deixa de ser apenas um schema JSON e passa a ser uma máquina de promoção de confiança verificável e reproduzível.
+
 
 
