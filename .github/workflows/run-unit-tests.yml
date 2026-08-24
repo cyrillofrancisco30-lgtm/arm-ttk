@@ -1,4 +1,18 @@
-﻿
+{
+  "claim_id": "CI_AUTOMATED_TEST_EXECUTION",
+  "evidence_type": "ExternalServiceEvent",
+  "provider": "GitHub Actions",
+  "repository": "cyrillofrancisco30-lgtm/arm-ttk",
+  "workflow": "RunPester",
+  "workflow_file": ".github/workflows/run-unit-tests.yml",
+  "execution_environment": "ubuntu-latest",
+  "test_framework": "Pester",
+  "result_artifact": "**.TestResults.xml",
+  "provenance": {
+    "upstream": "Azure/arm-ttk",
+    "repository_type": "FORK"
+  }
+}﻿
 name: RunPester
 on: 
   workflow_dispatch: 
