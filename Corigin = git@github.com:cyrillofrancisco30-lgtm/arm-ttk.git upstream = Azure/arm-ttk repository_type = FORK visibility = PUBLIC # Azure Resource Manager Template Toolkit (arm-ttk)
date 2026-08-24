@@ -1,3 +1,640 @@
+Contrato Normativo de Evidência — XA TRUST
+
+1. Princípio fundamental
+
+EVIDENCE_TYPE ≠ PROOF_OF_EXECUTION
+
+EVIDENCE_TYPE define a semântica do artefato. A classificação de uma evidência não constitui, por si só, prova de execução, autenticidade factual ou validade da operação descrita.
+
+As seguintes distinções são obrigatórias:
+
+API_DISCOVERY          ≠ API_EXECUTION  
+API_CONFIGURATION      ≠ API_EXECUTION  
+API_RESPONSE           ≠ API_EXECUTION  
+DEPLOYMENT_ATTESTATION ≠ API_EXECUTION  
+API_EXECUTION          ≠ VERIFICATION_RESULT
+
+
+---
+
+2. Taxonomia de evidências
+
+Os valores permitidos para evidence_type são:
+
+API_DISCOVERY  
+API_CONFIGURATION  
+API_EXECUTION  
+API_RESPONSE  
+DEPLOYMENT_ATTESTATION  
+AUDIT_EVENT  
+VERIFICATION_RESULT
+
+2.1 Semântica dos tipos
+
+API_DISCOVERY
+
+Representa uma capacidade, superfície ou interface pública declarada.
+
+API_CONFIGURATION
+
+Representa um serviço, recurso ou capacidade habilitada ou configurada.
+
+API_EXECUTION
+
+Representa uma operação efetivamente executada.
+
+API_RESPONSE
+
+Representa o resultado retornado por uma operação.
+
+DEPLOYMENT_ATTESTATION
+
+Representa uma atestação sobre imagem, build, identidade ou deployment.
+
+AUDIT_EVENT
+
+Representa um evento registrado por um sistema de auditoria.
+
+VERIFICATION_RESULT
+
+Representa a conclusão produzida por um verificador independente a partir de uma ou mais evidências.
+
+
+---
+
+3. Estrutura do artefato
+
+Toda evidência deverá obedecer à seguinte estrutura lógica:
+
+{  
+  "evidence_id": "string",  
+  "evidence_type": "API_DISCOVERY",  
+  "source": {  
+    "system": "string",  
+    "component": "string",  
+    "identity": "string"  
+  },  
+  "captured_at": "2026-08-24T00:00:00Z",  
+  "raw_artifact": {},  
+  "canonicalization": {  
+    "algorithm": "RFC8785-JCS",  
+    "encoding": "UTF-8"  
+  },  
+  "hash": {  
+    "algorithm": "SHA-256",  
+    "value": "hexadecimal-or-base64url-digest"  
+  },  
+  "provenance": {  
+    "correlation_id": "string",  
+    "parent_evidence": []  
+  }  
+}
+
+O campo raw_artifact deverá conter o artefato bruto utilizado no processo de canonicalização e hashing.
+
+
+---
+
+4. Proveniência
+
+O campo source deverá identificar a origem declarada da evidência:
+
+{  
+  "system": "string",  
+  "component": "string",  
+  "identity": "string"  
+}
+
+O campo provenance deverá registrar as relações de origem e dependência:
+
+{  
+  "correlation_id": "string",  
+  "parent_evidence": []  
+}
+
+Quando uma evidência for produzida com base em outras evidências, seus identificadores deverão ser registrados em parent_evidence.
+
+A proveniência não altera a semântica do evidence_type e não poderá ser utilizada para promover automaticamente uma evidência a outro tipo.
+
+
+---
+
+5. Canonicalização e integridade criptográfica
+
+O processo normativo de transformação será:
+
+raw_artifact  
+    │  
+    ▼  
+RFC 8785 / JCS  
+    │  
+    ▼  
+canonical_json  
+    │  
+    ▼  
+UTF-8  
+    │  
+    ▼  
+canonical_bytes  
+    │  
+    ▼  
+SHA-256  
+    │  
+    ▼  
+evidence_hash
+
+Formalmente:
+
+canonical_bytes = UTF8(JCS(raw_artifact))  
+  
+evidence_hash = SHA256(canonical_bytes)
+
+O evidence_hash identifica criptograficamente os bytes canônicos derivados do raw_artifact.
+
+A validade do hash demonstra apenas que os bytes verificados correspondem ao digest registrado. Ela não demonstra, isoladamente, que:
+
+a operação ocorreu;
+
+o conteúdo é verdadeiro;
+
+a origem é confiável;
+
+a API foi executada;
+
+o resultado é semanticamente suficiente.
+
+
+
+---
+
+6. Regras de não promoção
+
+As seguintes transições são proibidas:
+
+API_DISCOVERY          ──X──> API_EXECUTION  
+API_CONFIGURATION      ──X──> API_EXECUTION  
+API_RESPONSE           ──X──> API_EXECUTION  
+DEPLOYMENT_ATTESTATION ──X──> API_EXECUTION  
+API_EXECUTION          ──X──> VERIFICATION_RESULT
+
+Uma evidência de API_EXECUTION poderá ser utilizada como entrada de uma verificação, mas não poderá ser considerada o próprio resultado da verificação.
+
+Da mesma forma, uma evidência de API_DISCOVERY, API_CONFIGURATION, API_RESPONSE ou DEPLOYMENT_ATTESTATION não poderá ser reinterpretada como prova de execução sem uma evidência independente classificada como API_EXECUTION.
+
+
+---
+
+7. Composição de evidências
+
+A verificação poderá considerar múltiplos tipos de evidência:
+
+API_DISCOVERY  
+      +  
+API_CONFIGURATION  
+      +  
+API_EXECUTION  
+      +  
+API_RESPONSE  
+      +  
+DEPLOYMENT_ATTESTATION  
+      +  
+AUDIT_EVENT  
+      │  
+      ▼  
+INDEPENDENT VERIFICATION  
+      │  
+      ▼  
+VERIFICATION_RESULT
+
+A presença de todas as categorias não é obrigatória em todos os casos. O verificador deverá avaliar se o conjunto disponível é suficiente para a proposição analisada.
+
+
+---
+
+8. Estados de verificação
+
+Os estados permitidos são:
+
+INTEGRITY_VALID  
+INTEGRITY_INVALID  
+SEMANTICALLY_SUPPORTED  
+SEMANTICALLY_UNSUPPORTED  
+INSUFFICIENT_EVIDENCE
+
+Esses estados não deverão ser tratados como equivalentes.
+
+Em particular:
+
+INTEGRITY_VALID ≠ SEMANTICALLY_SUPPORTED
+
+Uma evidência poderá possuir integridade criptográfica válida e, ainda assim, ser semanticamente insuficiente para sustentar determinada proposição.
+
+
+---
+
+9. Estrutura do resultado de verificação
+
+Um VERIFICATION_RESULT deverá referenciar as evidências analisadas por evidence_id e evidence_hash:
+
+{  
+  "evidence_type": "VERIFICATION_RESULT",  
+  "verification_status": "SEMANTICALLY_SUPPORTED",  
+  "verified_evidence": [  
+    {  
+      "evidence_id": "ev-001",  
+      "evidence_hash": "..."  
+    },  
+    {  
+      "evidence_id": "ev-002",  
+      "evidence_hash": "..."  
+    }  
+  ],  
+  "verifier": {  
+    "name": "xa-trust-verifier",  
+    "version": "1.0.0",  
+    "identity": "verifier-identity"  
+  },  
+  "verified_at": "2026-08-24T00:00:00Z",  
+  "limitations": []  
+}
+
+O resultado de verificação não deverá substituir os artefatos originais nem alterar seus respectivos tipos.
+
+
+---
+
+10. Princípio normativo final
+
+O tipo da evidência define sua semântica.  
+  
+A proveniência define sua origem declarada.  
+  
+A canonicalização define sua representação determinística.  
+  
+O UTF-8 define os bytes submetidos ao hash.  
+  
+O SHA-256 define o digest.  
+  
+O verificador define a conclusão.  
+  
+A conclusão do verificador não altera a natureza da evidência original.
+
+A composição formal do contrato é:
+
+EVIDENCE_TYPE  
+      +  
+SOURCE  
+      +  
+RAW_ARTIFACT  
+      +  
+PROVENANCE  
+      +  
+CANONICALIZATION  
+      +  
+EVIDENCE_HASH  
+      │  
+      ▼  
+XA TRUST VERIFIER  
+      │  
+      ▼  
+VERIFICATION_RESULT
+
+Este contrato impede que a integridade criptográfica seja confundida com prova semântica e impede que um catálogo, uma configuração, uma resposta ou uma atestação de deployment seja convertido automaticamente em prova de execução.
+
+Sim. Esse é o próximo salto lógico: não alterar o FROZEN EVIDENCE CONTRACT, mas adicionar duas camadas externas que aumentam a força da evidência operacional.
+
+Arquitetura consolidada
+
+XA TRUST
+│
+┌──────────────┼──────────────┐
+▼              ▼              ▼
+CONTRACT       EVIDENCE       VERIFIER
+│              │              │
+▼              ▼              ▼
+Validation      Frozen         Derived
+APIs         Evidence        Checks
+│              │
+└──────┬───────┘
+▼
+DecisionFunction
+│
+▼
+VERIFICATION_RESULT
+│
+┌────────────┴────────────┐
+▼                         ▼
+IMMUTABLE LEDGER          RUNTIME ATTESTATION
+│                         │
+└────────────┬────────────┘
+▼
+OPERATIONAL TRUST
+
+A distinção fundamental continua intacta:
+
+> ledger e attestation não mudam a natureza da evidência; aumentam a capacidade de demonstrar integridade, temporalidade, vinculação e contexto operacional.
+
+
+
+
+---
+
+1. Immutable Ledger
+
+
+
+O ledger deveria funcionar como âncora de evidência, não como substituto do Evidence Contract.
+
+Fluxo:
+
+Evidence
+│
+▼
+JCS
+│
+▼
+SHA-256
+│
+▼
+evidence_hash
+│
+▼
+Merkle Tree
+│
+▼
+Merkle Root
+│
+▼
+Immutable Anchor
+
+O registro poderia conter:
+
+{
+"anchor_id": "anchor-2026-000001",
+"evidence_hash": "sha256:...",
+"merkle_root": "sha256:...",
+"tree_position": 17,
+"anchored_at": "2026-08-24T20:00:00Z",
+"ledger_sequence": 10042
+}
+
+O ponto importante é:
+
+Ledger says:
+"este digest estava ancorado neste momento"
+
+não:
+
+"esta operação necessariamente aconteceu"
+
+Isso preserva exatamente a filosofia do contrato.
+
+
+---
+
+2. Runtime Attestation
+
+
+
+Runtime attestation fecha outra lacuna.
+
+Você precisa vincular:
+
+SOURCE
+↓
+BUILD
+↓
+IMAGE
+↓
+DEPLOYMENT
+↓
+RUNTIME INSTANCE
+↓
+EXECUTION
+
+Por exemplo:
+
+{
+"evidence_type": "DEPLOYMENT_ATTESTATION",
+"raw_artifact": {
+"image_digest": "sha256:...",
+"source_commit": "3dd41f2...",
+"build_id": "build-2026-081",
+"deployment_id": "deploy-009",
+"runtime_identity": "workload-abc",
+"execution_environment": "production",
+"attestation_time": "2026-08-24T19:55:00Z"
+}
+}
+
+Isso demonstra algo diferente de API_EXECUTION.
+
+A attestation responde:
+
+> qual software/identidade/contexto estava autorizado ou presente no runtime?
+
+
+
+A execução responde:
+
+> qual operação foi observada?
+
+
+
+São evidências diferentes.
+
+
+---
+
+3. A vinculação entre elas é o verdadeiro ganho
+
+
+
+O modelo forte fica:
+
+SOURCE COMMIT
+│
+▼
+BUILD
+│
+▼
+IMAGE DIGEST
+│
+▼
+DEPLOYMENT ATTESTATION
+│
+▼
+RUNTIME IDENTITY
+│
+▼
+API_EXECUTION
+│
+▼
+API_RESPONSE
+│
+▼
+EVIDENCE HASH
+│
+▼
+MERKLE ROOT
+│
+▼
+IMMUTABLE ANCHOR
+│
+▼
+INDEPENDENT VERIFICATION
+
+Agora existe uma cadeia de vinculação muito mais completa.
+
+
+---
+
+4. Os três níveis não devem ser confundidos
+
+
+
+Eu manteria explicitamente:
+
+Integridade
+
+evidence_hash == SHA256(JCS(raw_artifact))
+
+Proveniência
+
+quem declarou / produziu / referenciou a evidência
+
+Runtime attestation
+
+qual workload / imagem / identidade estava associada ao contexto operacional
+
+Execução
+
+qual operação foi efetivamente registrada
+
+Ledger
+
+qual digest foi imutavelmente ancorado
+
+Verificação
+
+o que um verificador independente concluiu
+
+São afirmações diferentes.
+
+
+---
+
+5. Isso permite uma promoção formal de confiança
+
+
+
+Você já possui uma boa estrutura para isso:
+
+AUTHENTICATED_REPLAY_VERIFIED
+│
+├── independent_verification
+├── immutable_anchor_verified
+└── runtime_attestation_verified
+│
+▼
+TRUSTED
+
+Formalmente:
+
+TRUSTED
+⇔
+AUTHENTICATED_REPLAY_VERIFIED
+∧
+INDEPENDENT_VERIFICATION
+∧
+IMMUTABLE_ANCHOR_VERIFIED
+∧
+RUNTIME_ATTESTATION_VERIFIED
+
+Mas eu faria uma distinção terminológica importante:
+
+TRUSTED deve ser um estado derivado, não uma propriedade armazenada arbitrariamente no contrato.
+
+Ou seja:
+
+evidence
++
+verification
++
+anchor
++
+attestation
+│
+▼
+TrustPolicy
+│
+▼
+TRUSTED / UNTRUSTED
+
+
+---
+
+6. O resultado final fica muito poderoso
+
+
+
+XA TRUST
+│
+┌───────┴───────┐
+▼               ▼
+CONTRACT         EVIDENCE
+│               │
+▼               ▼
+VALIDATION        CRYPTOGRAPHY
+│               │
+└───────┬───────┘
+▼
+VERIFIER
+│
+▼
+AUTHENTICATED REPLAY
+VERIFIED
+│
+┌──────────┴──────────┐
+▼                     ▼
+INDEPENDENT VERIFY      RUNTIME ATTEST
+│                     │
+└──────────┬──────────┘
+▼
+IMMUTABLE ANCHOR
+│
+▼
+TRUSTED
+
+Isso transforma a arquitetura de:
+
+> evidência verificável
+
+
+
+em:
+
+> confiança operacional derivada de evidência verificável.
+
+
+
+E essa diferença é importante.
+
+O XA TRUST não precisa afirmar que qualquer evento é verdadeiro. Ele pode afirmar, de maneira muito mais rigorosa:
+
+> dadas determinadas evidências, contratos, vínculos criptográficos, atestações, âncoras e regras de verificação, o estado de confiança foi derivado de forma determinística e auditável.
+
+
+
+Essa é, na minha avaliação, a forma mais forte de fechar a arquitetura sem quebrar o princípio fundamental do contrato:
+
+EVIDENCE_TYPE ≠ PROOF_OF_EXECUTION
+EVIDENCE ≠ CHECK
+CHECK ≠ DECISION
+DECISION ≠ TRUST
+
+Cada promoção precisa de uma regra verificável própria.
+
 {
   "claim_id": "CLAIM-REPO-FORK-001",
 
