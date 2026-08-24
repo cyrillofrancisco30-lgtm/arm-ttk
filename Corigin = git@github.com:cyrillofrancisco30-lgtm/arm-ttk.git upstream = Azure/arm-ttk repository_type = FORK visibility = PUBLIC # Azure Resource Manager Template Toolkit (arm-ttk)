@@ -776,6 +776,76 @@ SIGNATURE / PROVENANCE
 XA-TRUST VERIFIER
 ↓
 PROMOTION
+Sim. A integração pode ser organizada em três contratos técnicos:
+
+1. **Contrato do ledger imutável**
+   - Registrar `proposição`, `evidências`, `hash`, `timestamp`, `versão` e `identidade do processo.
+   - Nunca sobrescrever registros; correções devem gerar novos eventos vinculados ao anterior.
+   - Retornar um identificador verificável, como `ledger_entry_id`.
+
+2. **Contrato de runtime attestation**
+   - Emitir atestações periódicas contendo:
+     - versão do código;
+     - hash da configuração;
+     - identidade do ambiente;
+     - estado dos componentes;
+     - intervalo de validade;
+     - assinatura criptográfica.
+   - Associar cada conclusão à atestação vigente no momento da execução.
+
+3. **Contrato de correlação de evidências**
+   - Usar um identificador comum, por exemplo `claim_id`.
+   - Vincular ao mesmo `claim_id` todas as entradas, logs, atestações, cálculos e decisões relacionadas.
+   - Calcular um nível de confiança com base na independência, qualidade e consistência das evidências.
+
+O fluxo seria:
+
+```text
+Evento observado
+   ↓
+Execução atestada
+   ↓
+Evidências normalizadas
+   ↓
+Correlação por claim_id
+   ↓
+Conclusão assinada
+   ↓
+Registro no ledger imutável
+```
+
+Uma estrutura mínima poderia ser:
+
+```json
+{
+  "claim_id": "claim-8f31",
+  "proposition": "O processo foi executado em ambiente íntegro",
+  "evidence": [
+    {
+      "type": "runtime_attestation",
+      "id": "att-102",
+      "hash": "..."
+    },
+    {
+      "type": "execution_log",
+      "id": "log-884",
+      "hash": "..."
+    }
+  ],
+  "conclusion": {
+    "status": "supported",
+    "confidence": 0.97
+  },
+  "attestation_ref": "att-102",
+  "ledger_entry_id": "ledger-5501",
+  "timestamp": "2026-08-24T12:00:00Z",
+  "signature": "..."
+}
+```
+
+Assim, “fazer esses contatos” significa conectar os três módulos por identificadores, hashes e assinaturas — não apenas trocar dados. Cada conclusão passa a carregar sua própria trilha verificável de origem, execução e sustentação.
+
+
 [19/08, 16:14] Francisco: {
 "evidence_id": "E-GCP-POLICY-DRYRUN-EXEC-000001",
 "evidence_type": "GCP_ORG_POLICY_DRYRUN_AUDIT_EVENT",
