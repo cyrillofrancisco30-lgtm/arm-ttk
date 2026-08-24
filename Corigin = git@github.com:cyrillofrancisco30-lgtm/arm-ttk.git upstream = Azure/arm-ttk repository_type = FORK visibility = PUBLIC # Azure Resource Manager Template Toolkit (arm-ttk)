@@ -1,3 +1,63 @@
+{
+  "claim_id": "CLAIM-REPO-FORK-001",
+
+  "claim": {
+    "subject": "cyrillofrancisco30-lgtm/arm-ttk",
+    "predicate": "IS_FORK_OF",
+    "object": "Azure/arm-ttk"
+  },
+
+  "verification": {
+    "result": "PASS",
+    "status": "VERIFIED",
+    "semantic_scope": [
+      "REPOSITORY_IDENTITY",
+      "FORK_RELATIONSHIP"
+    ],
+    "policy_id": "XA-TRUST-REPO-RELATIONSHIP-v1",
+    "verifier": "xatrust-verifier",
+    "verifier_version": "1.4.0",
+    "canonicalization": "RFC8785"
+  },
+
+  "external_evidence": [
+    {
+      "type": "PLATFORM_POLICY_EVIDENCE",
+      "source": "GitHub Community",
+      "artifact": "CODE_OF_CONDUCT.md",
+      "status": "CORROBORATED",
+      "supports": [
+        "COMMUNITY_GOVERNANCE",
+        "AI_CONTENT_RESPONSIBILITY",
+        "NON_IMPLIED_GITHUB_AUTHORITY"
+      ]
+    }
+  ],
+
+  "non_implication": {
+    "verified_does_not_mean": [
+      "CODE_EXECUTION",
+      "AZURE_EXECUTION",
+      "XA_TRUST_EXECUTION",
+      "XA_TRUST_DEP",
+      "XA_TRUST_RUNTIME",
+      "XA_TRUST_DECISION",
+      "MICROSOFT_APPROVAL",
+      "GITHUB_CERTIFICATION",
+      "REGULATORY_ACCEPTANCE"
+    ]
+  },
+
+  "promotion": {
+    "from": "CORROBORATED",
+    "to": "VERIFIED",
+    "promotion_scope": [
+      "REPOSITORY_IDENTITY",
+      "FORK_RELATIONSHIP"
+    ]
+  }
+}
+
 origin = git@github.com:cyrillofrancisco30-lgtm/arm-ttk.git
 upstream = Azure/arm-ttk
 repository_type = FORK
