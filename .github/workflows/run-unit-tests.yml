@@ -91,6 +91,82 @@ Se houver fixture + execução + resultado verificável:
 RESULT = SEMANTICALLY_SUPPORTED
 Isso é muito mais forte do que simplesmente procurar uma palavra PASS em um caminho de arquivo.
 
+
+{
+  "evidence_id": "E-GITHUB-ARM-TTK-WORKFLOW-RUNPESTER-001",
+  "evidence_type": "API_CONFIGURATION",
+  "semantic_scope": [
+    "CI_WORKFLOW_DEFINITION",
+    "TEST_EXECUTION_CONTRACT",
+    "AUTOMATION_CONFIGURATION"
+  ],
+  "source": {
+    "provider": "GitHub",
+    "repository": "cyrillofrancisco30-lgtm/arm-ttk",
+    "ref": "master",
+    "path": ".github/workflows/run-unit-tests.yml"
+  },
+  "observed": {
+    "workflow": "RunPester",
+    "trigger": [
+      "workflow_dispatch",
+      "push",
+      "pull_request"
+    ],
+    "runner": "ubuntu-latest",
+    "framework": "Pester",
+    "result_artifact": "**.TestResults.xml"
+  },
+  "non_implication": [
+    "WORKFLOW_RUN",
+    "TEST_EXECUTION",
+    "TEST_PASS",
+    "AZURE_EXECUTION",
+    "MICROSOFT_APPROVAL",
+    "REGULATORY_ACCEPTANCE"
+  ]
+}
+
+{
+  "evidence_type": "API_EXECUTION",
+  "execution": {
+    "provider": "GitHub Actions",
+    "workflow": "RunPester",
+    "run_id": "...",
+    "commit_sha": "...",
+    "runner": "ubuntu-latest"
+  },
+  "result_artifact": {
+    "name": "PesterResults",
+    "path": "**.TestResults.xml",
+    "hash": "sha256:..."
+  }
+}
+
+unit-tests/
+Allowed-Values-Should-Actually-Be-Allowed/
+Pass/
+LocationValueAllowed/
+createUiDefinition.json
+
+                ARM-TTK
+                   │
+       ┌───────────┴───────────┐
+       ▼                       ▼
+ TEST FIXTURE             WORKFLOW
+       │                       │
+       │                       ▼
+       │                  PESTER RUN
+       │                       │
+       │                       ▼
+       │                 TEST RESULTS
+       │                       │
+       └───────────┬───────────┘
+                   ▼
+             XA TRUST
+                   │
+                   ▼
+          CLAIM VERIFICATION
 "cyrillofrancisco30-lgtm/arm-ttk"
 cyrillofrancisco30@gmail.com 
 
