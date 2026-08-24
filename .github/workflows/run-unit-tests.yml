@@ -1,3 +1,64 @@
+PUBLIC SOURCE ARTIFACT
+        │
+        ▼
+CI/CD EXECUTION CONTRACT
+        │
+        ▼
+EXPECTED TEST EXECUTION
+        │
+        │   [não promover]
+        X
+        │
+        ▼
+WORKFLOW RUN
+        │
+        ▼
+OBSERVED EXECUTION
+        │
+        ▼
+TEST RESULT ARTIFACT
+        │
+        ▼
+CRYPTOGRAPHIC EVIDENCE
+        │
+        ▼
+INDEPENDENT VERIFICATION
+
+{
+  "evidence_type": "API_CONFIGURATION",
+  "artifact_type": "CI_WORKFLOW_DEFINITION",
+  "workflow": "RunPester",
+  "runner": "ubuntu-latest",
+  "test_framework": "Pester",
+  "result_artifact": "PesterResults"
+}
+
+{
+  "evidence_type": "API_EXECUTION",
+  "artifact_type": "CI_WORKFLOW_RUN",
+  "workflow": "RunPester",
+  "run_id": "...",
+  "commit_sha": "...",
+  "execution_status": "COMPLETED",
+  "observed_artifacts": [
+    "PesterResults"
+  ]
+}
+
+{
+  "evidence_type": "VERIFICATION_RESULT",
+  "verification_status": "SEMANTICALLY_SUPPORTED",
+  "verified_evidence": [
+    {
+      "evidence_id": "E-WORKFLOW-DEFINITION-001",
+      "evidence_hash": "..."
+    },
+    {
+      "evidence_id": "E-WORKFLOW-RUN-001",
+      "evidence_hash": "..."
+    }
+  ]
+}
 [24/08, 00:26] Francisco: IS_FORK_OF(cyrillofrancisco30-lgtm/arm-ttk, Azure/arm-ttk)
 → VERIFIED
 
