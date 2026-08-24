@@ -1,3 +1,76 @@
+REPOSITORY_IDENTITY
+        ↓
+COMMIT_IDENTITY
+        ↓
+ARTIFACT_IDENTITY
+        ↓
+CONTENT_INTEGRITY
+        ↓
+DECLARED_EXECUTION_MODEL
+        │
+        X  ← falta runtime binding
+        │
+        ▼
+EXECUTION_OBSERVATION
+        ↓
+RESULT_OBSERVATION
+        ↓
+SEMANTIC_VALIDATION
+        ↓
+INDEPENDENT_VERIFICATION
+        ↓
+VERIFICATION_RESULT
+
+FIXTURE
+  ≠
+EXECUTION
+
+WORKFLOW
+  ≠
+WORKFLOW_RUN
+
+COMMIT
+  ≠
+TEST_PASS
+
+{
+  "evidence_id": "E-GITHUB-COMMIT-FB1668A-001",
+  "evidence_type": "AUDIT_EVENT",
+  "semantic_scope": [
+    "SOURCE_CHANGE",
+    "WORKFLOW_DEFINITION",
+    "EXECUTION_MODEL_DECLARATION"
+  ],
+  "source": {
+    "provider": "GitHub",
+    "repository": "cyrillofrancisco30-lgtm/arm-ttk",
+    "commit": "fb1668aea6dc3451ff9d56809c59d634aa37cd11",
+    "parent": "aba180b",
+    "path": ".github/workflows/run-unit-tests.yml"
+  },
+  "verification_scope": {
+    "commit_identity": "SUPPORTED",
+    "file_change": "SUPPORTED",
+    "workflow_definition": "SUPPORTED",
+    "workflow_execution": "NOT_ESTABLISHED",
+    "test_execution": "NOT_ESTABLISHED",
+    "test_pass": "NOT_ESTABLISHED"
+  }
+}
+
+
+REPOSITORY_IDENTITY
+        ↓
+COMMIT_IDENTITY
+        ↓
+ARTIFACT_IDENTITY
+        ↓
+CONTENT_INTEGRITY
+        ↓
+DECLARED_EXECUTION_MODEL
+        │
+        X  
+
 🔒 FROZEN — XA-TRUST NON-INFERENCE INVARIANT
 
 Concordo. A formulação está suficientemente precisa para ser tratada como invariante arquitetural transversal do XA-TRUST.
