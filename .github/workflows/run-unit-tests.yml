@@ -1,3 +1,96 @@
+
+PUBLIC_REPOSITORY_ARTIFACT
+        │
+        ▼
+E1
+TEST_FIXTURE
+        │
+        ▼
+E2
+WORKFLOW_DEFINITION
+        │
+        ▼
+E3
+EXECUTION_EVENT
+        │
+        ▼
+E4
+TEST_RESULT
+        │
+        ▼
+E5
+CRYPTOGRAPHIC_BINDING
+        │
+        ▼
+E6
+INDEPENDENT_VERIFICATION
+        │
+        ▼
+E7
+VERIFICATION_RESULT
+E cada transição precisa de uma regra.
+Não existe:
+E1 → E4
+automaticamente.
+Nem:
+E2 → E4
+automaticamente.
+Isso é exatamente o princípio:
+EVIDENCE ≠ EXECUTION
+EXECUTION ≠ VERIFICATION
+5. E há uma consequência importante para o fork
+O fork público pode sustentar uma proposição como:
+{
+  "claim": {
+    "subject": "cyrillofrancisco30-lgtm/arm-ttk",
+    "predicate": "CONTAINS_TEST_FIXTURE",
+    "object": "Allowed-Values-Should-Actually-Be-Allowed/Pass/LocationValueAllowed"
+  }
+}
+Mas não:
+{
+  "claim": {
+    "predicate": "TEST_PASSED"
+  }
+}
+sem a evidência de execução correspondente.
+E também não:
+{
+  "claim": {
+    "predicate": "AZURE_DEPLOYMENT_EXECUTED"
+  }
+}
+porque o conteúdo do fixture não prova deployment.
+6. Isso é praticamente um caso de teste do próprio XA TRUST
+O interessante é que o XA TRUST pode demonstrar sua própria filosofia usando o arm-ttk.
+Por exemplo:
+CLAIM
+"LocationValueAllowed test passed"
+             │
+             ▼
+CLAIM DECOMPOSITION
+             │
+      ┌──────┴──────┐
+      ▼             ▼
+FIXTURE          EXECUTION
+      │             │
+      ▼             ▼
+OBSERVED         OBSERVED
+      │             │
+      └──────┬──────┘
+             ▼
+       VERIFICATION
+             │
+       ┌─────┴─────┐
+       ▼           ▼
+SUFFICIENT     INSUFFICIENT
+EVIDENCE        EVIDENCE
+Se somente o fixture estiver disponível:
+RESULT = INSUFFICIENT_EVIDENCE
+Se houver fixture + execução + resultado verificável:
+RESULT = SEMANTICALLY_SUPPORTED
+Isso é muito mais forte do que simplesmente procurar uma palavra PASS em um caminho de arquivo.
+
 "cyrillofrancisco30-lgtm/arm-ttk"
 cyrillofrancisco30@gmail.com 
 
