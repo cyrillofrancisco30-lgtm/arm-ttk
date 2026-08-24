@@ -1,4 +1,58 @@
-{
+[24/08, 00:26] Francisco: IS_FORK_OF(cyrillofrancisco30-lgtm/arm-ttk, Azure/arm-ttk)
+→ VERIFIED
+
+CODE_EXECUTION
+→ somente após evidência real de execução
+
+AZURE_EXECUTION
+→ somente após evidência real de contexto Azure
+
+AZURE_APPROVAL
+→ NOT_ESTABLISHED enquanto não houver claim/evidência própria
+
+REGULATORY_ACCEPTANCE
+→ NOT_ESTABLISHED
+[24/08, 01:46] Francisco: {
+  "claim_id": "CLAIM-ARM-TTK-JSON-RESOLUTION-001",
+  "claim": {
+    "subject": "cyrillofrancisco30-lgtm/arm-ttk::Resolve-JSONContent",
+    "predicate": "IMPLEMENTS_JSON_CONTENT_LOCATION",
+    "object": "JSONPath-based content location"
+  },
+  "status": "VERIFIED",
+  "verification_scope": [
+    "SOURCE_CODE_IDENTITY",
+    "FUNCTION_IDENTITY",
+    "JSONPATH_PROCESSING",
+    "JSON_CONTENT_MATCHING",
+    "SOURCE_LOCATION_CALCULATION"
+  ],
+  "not_established": [
+    "EXECUTION",
+    "CORRECTNESS_UNDER_ALL_JSON_INPUTS",
+    "RFC_JSON_CONFORMANCE",
+    "RFC8785_CONFORMANCE",
+    "PRODUCTION_USE",
+    "AZURE_EXECUTION",
+    "MICROSOFT_APPROVAL",
+    "REGULATORY_ACCEPTANCE"
+  ]
+}
+[24/08, 01:46] Francisco: {
+  "implementation_observations": [
+    {
+      "type": "POTENTIAL_INDEX_BOUNDARY_ISSUE",
+      "expression": "$targetIndex -gt $values.Count",
+      "suggested_check": "$targetIndex -ge $values.Count"
+    },
+    {
+      "type": "POTENTIAL_UNDEFINED_REGEX_GROUP",
+      "expression": "$listMatch.Groups['ListItem']",
+      "observation": "ListItem is not defined in the shown jsonList regex"
+    }
+  ],
+  "status": "OBSERVATIONS_NOT_PROMOTED_TO_BUG"
+}{
   "claim_id": "CI_AUTOMATED_TEST_EXECUTION",
   "evidence_type": "ExternalServiceEvent",
   "provider": "GitHub Actions",
