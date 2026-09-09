@@ -1,4 +1,128 @@
-{
+Sim. O arquivo .github/fabricbot.json do fork cyrillofrancisco30-lgtm/arm-ttk merece 
+
+O GitHub mostra que o repositório é um fork de Azure/arm-ttk e que o arquivo atual tem 1.090 linhas / 24,4 KB. 
+
+O que esse arquivo é
+
+fabricbot.json é uma configuração de automação operacional do repositório. O conteúdo define tarefas/eventos e ações do Fabricbot.
+
+Por exemplo, o arquivo contém uma tarefa agendada chamada “Close stale pull requests”, com frequência definida por dias/horários e filtros como:
+
+isPr
+isOpen
+hasLabel("Needs: author feedback")
+hasLabel("Status: no recent activity")
+noActivitySince(7 days)
+
+e a ação:
+
+closeIssue
+
+
+
+Também há outra tarefa agendada para adicionar a label Status: no recent activity a pull requests sem atividade recente. 
+
+Classificação XA-TRUST
+
+Eu classificaria:
+
+.github/fabricbot.json
+        ↓
+PLATFORM_AUTOMATION_CONFIGURATION
+        ↓
+REPOSITORY_AUTOMATION_POLICY
+        ↓
+DECLARED_AUTOMATION_BEHAVIOR
+
+Portanto:
+
+FABRICBOT_CONFIGURATION
+        ↛
+FABRICBOT_EXECUTION
+
+e:
+
+AUTOMATION_CONFIGURATION
+        ↛
+AUTOMATION_RESULT
+
+e principalmente:
+
+AUTOMATION_CONFIGURATION
+        ↛
+VERIFIED
+
+No XA Kernel
+
+O fluxo correto seria:
+
+CLAIM_SCOPE
+    │
+    ▼
+AUTOMATION_CONFIGURATION
+    │
+    ▼
+CLAIM-SPECIFIC EVIDENCE
+    │
+    ▼
+VALID BINDINGS
+    │
+    ▼
+REQUIRED VERIFICATION
+    │
+    ▼
+DETERMINISTIC DECISION
+       /        \
+      ▼          ▼
+ VERIFIED    NOT_VERIFIED
+
+Por exemplo, o arquivo pode sustentar um claim como:
+
+FABRICBOT_TASK_DECLARED
+
+ou:
+
+STALE_PR_AUTOMATION_CONFIGURED
+
+porque a configuração efetivamente contém a tarefa, seus filtros, sua periodicidade e sua ação. 
+
+Mas não:
+
+FABRICBOT_TASK_DECLARED
+        ↛
+FABRICBOT_TASK_EXECUTED
+
+FABRICBOT_TASK_EXECUTED
+        ↛
+ACTION_SUCCEEDED
+
+ACTION_SUCCEEDED
+        ↛
+CLAIM_VERIFIED
+
+Um detalhe importante para o seu modelo
+
+O próprio arquivo contém IDs internos das tarefas, por exemplo:
+
+"id": "zvtputzVI9J"
+
+Isso é identidade/configuração do objeto de automação, não um execution_id. 
+
+Portanto, no XA-TRUST:
+
+TASK_ID
+   ↛
+EXECUTION_ID
+
+e:
+
+TASK_CONFIGURATION
+   ↛
+EXECUTION_EVENT
+
+Essa distinção é exatamente compatível com o XA Kernel que definimos: o Kernel pode reconhecer que uma automação foi declarada/configurada, mas exige evidência específica e bindings concretos antes de reconhecer uma execução, um resultado ou finalmente VERIFIED.
+
+[Abrir o fabricbot.json no GitHub](https://github.com/cyrillofrancisco30-lgtm/arm-ttk/blob/master/.github%2Ffabricbot.json?utm_source=chatgpt.com)ou{
   "version": "1.0",
   "tasks": [
     {
@@ -1088,3 +1212,190 @@
   ],
   "userGroups": []
 }
+
+Sim. Este commit é especialmente relevante para o XA-TRUST, e agora temos o diff diretamente verificável no GitHub.
+
+[Abrir o commit fb1668a no GitHub](https://github.com/cyrillofrancisco30-lgtm/arm-ttk/commit/fb1668aea6dc3451ff9d56809c59d634aa37cd11?utm_source=chatgpt.com)
+
+O que o commit comprova
+
+O GitHub registra:
+
+commit: fb1668aea6dc3451ff9d56809c59d634aa37cd11
+
+parent: aba180b
+
+autor: cyrillofrancisco30-lgtm
+
+mensagem: Atualizar o run-unit-tests.yml
+
+1 arquivo alterado
+
+76 linhas adicionadas
+
+arquivo: .github/workflows/run-unit-tests.yml 
+
+
+Mais importante: o próprio diff mostra que foram adicionados ao workflow objetos XA-TRUST declarando API_CONFIGURATION, CI_WORKFLOW_DEFINITION, TEST_EXECUTION_CONTRACT e AUTOMATION_CONFIGURATION. 
+
+E aqui está a evidência decisiva
+
+O commit adiciona:
+
+"evidence_type": "API_EXECUTION"
+
+"run_id": "..."
+"commit_sha": "..."
+"runner": "ubuntu-latest"
+
+"result_artifact": {
+    "name": "PesterResults",
+    "path": "**.TestResults.xml",
+    "hash": "sha256:..."
+}
+
+Ou seja, os campos de execução estão explicitamente como placeholders (...). O diff não apresenta um run_id concreto, nem um SHA concreto de TestResults.xml. 
+
+Portanto, a classificação correta é:
+
+COMMIT fb1668a
+      │
+      ▼
+SOURCE_CHANGE
+      │
+      ▼
+WORKFLOW_ARTIFACT
+      │
+      ▼
+DECLARED_EXECUTION_MODEL
+
+e não:
+
+COMMIT
+  ↓
+WORKFLOW_EXECUTED
+  ↓
+TEST_PASSED
+
+Isso é quase um caso de teste perfeito do XA-TRUST
+
+O próprio arquivo adicionado declara uma seção non_implication contendo:
+
+WORKFLOW_RUN
+TEST_EXECUTION
+TEST_PASS
+AZURE_EXECUTION
+MICROSOFT_APPROVAL
+REGULATORY_ACCEPTANCE
+
+Isso é extremamente alinhado ao seu invariante de não-inferência. 
+
+Então podemos representar:
+
+COMMIT_EXISTS
+      │
+      ▼
+FILE_CHANGED
+      │
+      ▼
+WORKFLOW_DEFINITION
+      │
+      ▼
+EXECUTION_SCHEMA_DECLARED
+      │
+      X
+      │
+      ├── run_id concreto?       NÃO
+      ├── execution timestamp?   NÃO
+      ├── TestResults.xml real?  NÃO
+      ├── artifact hash real?    NÃO
+      └── test pass observado?   NÃO
+
+Logo:
+
+TEST_EXECUTION = INSUFFICIENT_EVIDENCE
+TEST_PASS      = INSUFFICIENT_EVIDENCE
+
+E há uma segunda evidência importante
+
+O mesmo commit adiciona o caminho:
+
+unit-tests/
+  Allowed-Values-Should-Actually-Be-Allowed/
+    Pass/
+      LocationValueAllowed/
+        createUiDefinition.json
+
+Portanto, temos simultaneamente fixture + workflow + modelo de execução, mas ainda não temos uma instância concreta de execução. 
+
+Isso materializa exatamente:
+
+FIXTURE
+  ≠
+EXECUTION
+
+WORKFLOW
+  ≠
+WORKFLOW_RUN
+
+COMMIT
+  ≠
+TEST_PASS
+
+Classificação que eu registraria
+
+{
+  "evidence_id": "E-GITHUB-COMMIT-FB1668A-001",
+  "evidence_type": "AUDIT_EVENT",
+  "semantic_scope": [
+    "SOURCE_CHANGE",
+    "WORKFLOW_DEFINITION",
+    "EXECUTION_MODEL_DECLARATION"
+  ],
+  "source": {
+    "provider": "GitHub",
+    "repository": "cyrillofrancisco30-lgtm/arm-ttk",
+    "commit": "fb1668aea6dc3451ff9d56809c59d634aa37cd11",
+    "parent": "aba180b",
+    "path": ".github/workflows/run-unit-tests.yml"
+  },
+  "verification_scope": {
+    "commit_identity": "SUPPORTED",
+    "file_change": "SUPPORTED",
+    "workflow_definition": "SUPPORTED",
+    "workflow_execution": "NOT_ESTABLISHED",
+    "test_execution": "NOT_ESTABLISHED",
+    "test_pass": "NOT_ESTABLISHED"
+  }
+}
+
+O ponto arquitetural
+
+Esse commit é uma demonstração muito forte de que o XA-TRUST consegue preservar a fronteira entre o que está efetivamente observado e aquilo que apenas está declarado.
+
+REPOSITORY_IDENTITY
+        ↓
+COMMIT_IDENTITY
+        ↓
+ARTIFACT_IDENTITY
+        ↓
+CONTENT_INTEGRITY
+        ↓
+DECLARED_EXECUTION_MODEL
+        │
+        X  ← falta runtime binding
+        │
+        ▼
+EXECUTION_OBSERVATION
+        ↓
+RESULT_OBSERVATION
+        ↓
+SEMANTIC_VALIDATION
+        ↓
+INDEPENDENT_VERIFICATION
+        ↓
+VERIFICATION_RESULT
+
+Conclusão: fb1668a é evidência forte de mudança versionada e declaração do modelo de evidência, mas não é evidência de uma execução concreta do Pester. O fato de o próprio diff conter run_id: "..." e hash: "sha256:..." torna essa distinção particularmente demonstrável. 
+
+Isso é exatamente o XA-TRUST NON-INFERENCE INVARIANT em um artefato real. 🔒
