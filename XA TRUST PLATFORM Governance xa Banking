@@ -1,4 +1,136 @@
 
+
+XA-TRUST
+│
+├── CORE TRUST DOMAIN
+│   ├── XA-KERNEL
+│   ├── XA-CVL
+│   ├── XA-EVIDENCE
+│   ├── XA-LEDGER
+│   ├── XA-REPLAY
+│   └── INDEPENDENT VERIFICATION
+│
+├── EXECUTION TRUST DOMAIN
+│   ├── COMMON EVIDENCE CONTRACT
+│   ├── BINDING ENGINE
+│   ├── INTEGRITY ENGINE
+│   ├── PROVENANCE ENGINE
+│   ├── REPLAY ENGINE
+│   ├── POLICY ENGINE
+│   └── TRUST ASSERTION ENGINE
+│
+└── LEVEL 3 — EXTERNAL EVIDENCE DOMAINS
+    │
+    ├── EXTERNAL KUBERNETES / PLATFORM OPERATIONS
+    │   └── GETUP
+    │
+    ├── GITHUB / SOURCE CONTROL
+    │
+    ├── AZURE / CLOUD PROVIDERS
+    │
+    ├── NUGET / PACKAGE ECOSYSTEM
+    │
+    └── OTHER EXTERNAL PROVIDERS
+
+Relação correta com Getup
+
+GETUP
+ │
+ ├── SERVICE_DECLARATION
+ ├── TECHNOLOGY_CAPABILITY
+ └── EXTERNAL_OPERATION_EVIDENCE
+             │
+             │ somente quando existir evidência concreta
+             ▼
+      XA-TRUST INGESTION
+             │
+             ▼
+      CLAIM CONTRACT
+             │
+             ▼
+       XA-KERNEL
+             │
+             ▼
+   INDEPENDENT VERIFICATION
+             │
+             ▼
+      VERIFIED CLAIM
+
+Portanto:
+
+GETUP_CAPABILITY
+        ↛
+GETUP_EXECUTION
+
+GETUP_SERVICE_DECLARATION
+        ↛
+CUSTOMER_OPERATION
+
+GETUP_OPERATION_EVIDENCE
+        ↛
+VERIFIED
+
+A última promoção continua pertencendo ao processo XA-TRUST de verificação, não à Getup.
+
+O mesmo princípio vale para AgentBaker
+
+AZURE AGENTBAKER
+      │
+      ├── SOURCE
+      ├── RELEASE METADATA
+      └── BUILD EVIDENCE
+               │
+               ▼
+       EXECUTION TRUST
+               │
+               ▼
+       CLAIM-SCOPED VERIFY
+
+Mas:
+
+AGENTBAKER_COMMIT
+        ↛
+BUILD_EXECUTED
+
+BUILD_EXECUTED
+        ↛
+NODE_IMAGE_VERIFIED
+
+NODE_IMAGE_VERIFIED
+        ↛
+BANKING_SYSTEM_VERIFIED
+
+Isso permite que Getup, Azure, Kubernetes, GitHub, Flink, Node.js etc. sejam fontes heterogêneas, enquanto o mecanismo de avaliação permanece uniforme.
+
+A regra-mãe
+
+Eu congelaria esta como uma das regras centrais:
+
+FROZEN — EXTERNAL EVIDENCE NON-AUTHORITY
+
+EXTERNAL_PROVIDER
+        ≠
+XA-TRUST_VERIFIER
+
+EXTERNAL_DECLARATION
+        ≠
+EXECUTION_EVIDENCE
+
+EXECUTION_EVIDENCE
+        ≠
+VERIFICATION
+
+VERIFICATION
+        ≠
+GLOBAL_TRUST
+
+VERIFIED
+        =
+CLAIM-SCOPED PROPERTY
+
+Isso deixa o XA-TRUST agnóstico ao fornecedor: Getup não é confiável porque declarou ser confiável; Azure não é confiável porque publicou uma capacidade; GitHub não é confiável porque registrou um commit. Cada fonte fornece evidência dentro de um escopo, e o XA-TRUST determina se aquela evidência é suficiente para promover aquele claim específico.
+
+Essa é provavelmente a fronteira mais limpa entre External Evidence Domain, Execution Trust Domain e XA-TRUST Core.
 # Azure Resource Manager Template Toolkit (arm-ttk)
 
 The code in this repository can be used for analyzing and testing [Azure Resource Manager Templates](https://docs.microsoft.com/azure/templates/).  The tests will check a template or set of templates for coding best practices.  There are some checks for simple syntactical errors but the intent is not to re-implement tests or checks that are provided by the platform (e.g. the /validate api).  
