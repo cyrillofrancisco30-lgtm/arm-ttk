@@ -1,3 +1,54 @@
+Código → Commit → Build → Provenance → Artefato → Runtime → Modelo → Decisão
+↓                                                    ↓
+DEP (Decision Evidence Package) → Ledger → Replay → TRUST_STATUS = VERIFIED
+
+TRUST_STATUS = VERIFIED  ⇔
+source_verification = PASS
+AND build_verification   = PASS
+AND artifact_verification= PASS
+AND cryptographic_verification = PASS
+AND ledger_verification = PASS
+AND replay_verification = MATCH
+
+{
+"request_id": "REQ-2026-001",
+"decision_id": "DEC-2026-001",
+
+"decision": {
+"result": "APPROVED",
+"model_version": "risk-engine-2.1",
+"policy_version": "policy-2026.07"
+},
+
+"software": {
+"name": "xa-banking-core",
+"version": "9.6",
+"artifact_hash": "sha256:4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f708192a3b4c5d6e7f8"
+},
+
+"verification": {
+"source_verification": "PASS",
+"build_verification": "PASS",
+"artifact_verification": "PASS",
+"cryptographic_verification": "PASS",
+"ledger_verification": "PASS",
+"replay_verification": "MATCH"
+},
+
+"evidence": {
+"dep_id": "DEP-2026-001",
+"aer_id": "AER-2026-001",
+"merkle_root": "sha256:5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f708192a3b4c5d6e7f8a9"
+},
+
+"runtime": {
+"attestation": "VALID",
+"environment": "production"
+},
+
+"trust_status": "VERIFIED"
+}
+
 
 WORKFLOW/RUN_ID_OBSERVED
         ↓
