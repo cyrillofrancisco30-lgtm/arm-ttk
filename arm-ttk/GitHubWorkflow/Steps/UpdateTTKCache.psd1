@@ -1,4 +1,26 @@
-﻿@{
+
+WORKFLOW/RUN_ID_OBSERVED
+        ↓
+ACTION_IDENTITY_BOUND
+        ↓
+STEP_IDENTITY_BOUND
+        ↓
+COMMIT/REF_BOUND
+        ↓
+COMMAND_EXECUTION_OBSERVED
+        ↓
+COMMAND_SEMANTICS_VALIDATED
+        ↓
+RESULT_OBSERVED
+        ↓
+INDEPENDENT_VERIFICATION
+        ↓
+VERIFIED_CLAIM
+DECLARATIVE_CONFIGURATION = OBSERVED
+COMMAND_DECLARATION       = OBSERVED
+EXECUTION                  
+
+
     name = "Update TTK Cache"
     uses = "Azure/powershell@v1"
     with = @{
