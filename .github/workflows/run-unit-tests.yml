@@ -1,520 +1,221 @@
-XA-TRUST — MODELO LÓGICO CONSOLIDADO E1–E7
-
-1. Estado atual
-
-PUBLIC_REPOSITORY_ARTIFACT       = ESTABLISHED
-FORK_RELATIONSHIP                = ESTABLISHED
-
-E1 TEST_FIXTURE_EVIDENCE         = ESTABLISHED / RESOLVABLE
-
-E2 WORKFLOW_CONFIGURATION_EVIDENCE
-                                  = ESTABLISHED
-
-E3 EXECUTION_EVENT_EVIDENCE      = NOT_ESTABLISHED
-
-E4 TEST_RESULT_EVIDENCE          = NOT_ESTABLISHED
-
-E5 CRYPTOGRAPHIC_BINDING_EVIDENCE
-                                  = NOT_ESTABLISHED
-
-E6 INDEPENDENT_VERIFICATION_EVENT
-                                  = NOT_PERFORMED
-
-E7 VERIFICATION_RESULT           = NOT_ESTABLISHED
-
-TEST_PASSED                      = UNVERIFIED
-
-API_EXECUTION_SCHEMA             = ESTABLISHED
-API_EXECUTION_EVENT              = NOT_ESTABLISHED
-
----
-
-2. Natureza do grafo
-
-E1–E7 não constituem uma cadeia de implicação lógica.
-
-São nós tipados de evidência, evento e resultado, relacionados por relações explícitas de:
-
-BINDING
-RESOLUTION
-PROVENANCE
-EVALUATION
-
-Portanto:
-
-BINDING              ≠ IMPLICATION
-RESOLUTION           ≠ IMPLICATION
-PROVENANCE           ≠ EXECUTION
-EXECUTION            ≠ RESULT
-VERIFICATION_EVENT   ≠ VERIFICATION_RESULT
-
-As relações do grafo devem ser interpretadas como:
-
-► = TYPED RELATION
-
-e não como:
-
-► = LOGICAL IMPLICATION
-
----
-
-3. Evidence Resolution Graph
-
-E1 ──[fixture_identity / artifact_binding]──────► E2
-
-E2 ──[workflow_execution_binding]───────────────► E3
-
-E3 ──[result_provenance_binding]────────────────► E4
-
-E4 ──[artifact_identity_binding]────────────────► E5
-
-E5 ──[verifier_input_resolution]────────────────► E6
-
-E6 ──[verification_execution / result_observation]──► E7
-
-O grafo representa o caminho operacional de resolução e verificação, não uma cadeia de estados herdados.
-
----
-
-4. Não-implicação
-
-Nenhum nó isolado implica automaticamente outro:
-
-E1 ↛ E2
-E1 ↛ E3
-E1 ↛ E4
-E1 ↛ E5
-E1 ↛ E6
-E1 ↛ E7
-
-E2 ↛ E3
-E2 ↛ E4
-E2 ↛ E5
-E2 ↛ E6
-E2 ↛ E7
-
-E3 ↛ E4
-E3 ↛ E5
-E3 ↛ E6
-E3 ↛ E7
-
-E4 ↛ E5
-E4 ↛ E6
-E4 ↛ E7
-
-E5 ↛ E6
-E5 ↛ E7
-
-E6 ↛ E7
-
-Consequentemente:
-
-E1/E2/E3/E4/E5
-    ↛
-VERIFIED
-
-e:
-
-E6
-    ↛
-E7 = PASS
-
----
-
-5. E1–E5
-
-E1 — TEST_FIXTURE_EVIDENCE
-
-Estabelece a identidade/resolubilidade do fixture.
-
-Não estabelece:
-
-EXECUTION
-RESULT
-PASS
-VERIFICATION
-VERIFIED
-
-E2 — WORKFLOW_CONFIGURATION_EVIDENCE
-
-Estabelece configuração/definição do workflow.
-
-Não estabelece:
-
-WORKFLOW_RUN
-EXECUTION
-TEST_RESULT
-TEST_PASS
-VERIFICATION
-VERIFIED
-
-E3 — EXECUTION_EVENT_EVIDENCE
-
-Somente existe quando um evento operacional real é observado e resolvido.
-
-Requer binding suficiente entre:
-
-RUN_ID
-↔ WORKFLOW_IDENTITY
-↔ COMMIT_SHA
-↔ JOB_ID
-↔ STEP_ID
-↔ TIMESTAMP
-↔ EXECUTION_CONTEXT
-↔ RAW_OUTPUT
-↔ RESULT_ARTIFACT
-
-Mesmo:
-
-E3 = ESTABLISHED
-
-não implica:
-
-E4 = ESTABLISHED
-
-E4 — TEST_RESULT_EVIDENCE
-
-Representa resultado efetivamente associado ao teste/execução.
-
-Não implica automaticamente:
-
-CRYPTOGRAPHIC_BINDING
-INDEPENDENT_VERIFICATION
-VERIFIED
-
-E5 — CRYPTOGRAPHIC_BINDING_EVIDENCE
-
-Estabelece os bindings criptográficos necessários dentro do escopo definido.
-
-Não implica:
-
-INDEPENDENT_VERIFICATION
-VERIFICATION_RESULT
-VERIFIED
-
----
-
-6. E6 — Independent Verification Event
-
-E6 é um evento de execução do verificador, não o resultado da verificação.
-
-Formalmente:
-
-E6 =
-OBSERVED_VERIFICATION_EXECUTION(
-    claim,
-    resolved_evidence_set,
-    verification_policy
-)
-
-Portanto:
-
-E6 = EXECUTED
-
-não significa:
-
-E7 = PASS
-
-O resultado precisa ser efetivamente observado.
-
----
-
-7. E7 — Verification Result
-
-E7 é o resultado observável associado à avaliação realizada por E6:
-
-E7 =
-OBSERVED_VERIFICATION_RESULT(
-    verification_execution = E6
-)
-
-Possibilidades:
-
-E6 = EXECUTED
-E7 = PASS
-
-ou:
-
-E6 = EXECUTED
-E7 = FAIL
-
-ou:
-
-E6 = EXECUTED
-E7 = INSUFFICIENT_EVIDENCE
-
-ou:
-
-E6 = EXECUTED
-E7 = NOT_PROMOTABLE
-
-Portanto:
-
-E6 EXISTS
-↛
-E7 = PASS
-
----
-
-8. Test result ≠ test pass
-
-O fluxo semântico correto é:
-
-E3 — EXECUTION_EVENT
+O ajuste deve fazer o workflow de evidência ser disparado automaticamente quando o workflow monitorado terminar. Para isso, adicione o gatilho `workflow_run`.
+
+## Workflow com disparo automático
+
+```yaml
+name: Evidence Collection
+
+on:
+  workflow_run:
+    workflows:
+      - CI
+    types:
+      - completed
+
+  workflow_dispatch:
+    inputs:
+      workflow_run_id:
+        description: "GitHub Actions workflow run ID"
+        required: false
+        type: string
+
+  schedule:
+    - cron: "0 2 * * 1"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  collect-evidence:
+    runs-on: ubuntu-latest
+
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      EVIDENCE_SIGNING_KEY: ${{ secrets.EVIDENCE_SIGNING_KEY }}
+      EVIDENCE_REPOSITORY: ${{ github.repository }}
+
+      # Ordem de resolução:
+      # 1. ID informado manualmente;
+      # 2. ID do workflow_run que disparou o evento;
+      # 3. resolução da execução mais recente, usada pelo schedule.
+      EVIDENCE_WORKFLOW_RUN_ID: >-
+        ${{ inputs.workflow_run_id || github.event.workflow_run.id || '' }}
+
+      EVIDENCE_EVENT_NAME: ${{ github.event_name }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate configuration
+        run: npm run evidence:validate
+
+      - name: Collect, verify and sign evidence
+        run: npm run evidence:collect
+
+      - name: Verify signed evidence bundle
+        run: npm run evidence:verify
+
+      - name: Upload evidence bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: github-actions-evidence
+          path: |
+            evidence-output/bundle.json
+            evidence-output/verification.json
+            evidence-output/signature.json
+          if-no-files-found: error
+          retention-days: 365
+```
+
+Substitua `CI` pelo nome exibido em `name:` no workflow monitorado:
+
+```yaml
+name: CI
+```
+
+O `workflow_run` recebe os eventos `completed`, `requested` e `in_progress`; neste caso, somente `completed` deve ser usado para impedir a coleta de uma execução ainda incompleta. <citation src="1"></citation>
+
+## Resolver o ID de forma determinística
+
+A função de resolução deve aceitar o ID proveniente do evento. Caso o workflow tenha sido disparado por `workflow_run`, não é necessário procurar a execução mais recente:
+
+```ts
+export async function resolveWorkflowRunId(
+  github: Octokit,
+  owner: string,
+  repo: string,
+  workflowPath: string,
+  explicitRunId?: string
+): Promise<number> {
+  if (explicitRunId?.trim()) {
+    const runId = Number(explicitRunId);
+
+    if (!Number.isSafeInteger(runId) || runId <= 0) {
+      throw new Error("EVIDENCE_WORKFLOW_RUN_ID must be a positive integer");
+    }
+
+    return runId;
+  }
+
+  const response = await github.paginate(
+    github.rest.actions.listWorkflowRuns,
+    {
+      owner,
+      repo,
+      workflow_id: workflowPath,
+      status: "completed",
+      per_page: 100
+    }
+  );
+
+  const candidates = response
+    .filter((run) =>
+      run.status === "completed" &&
+      (run.conclusion === "success" || run.conclusion === "failure") &&
+      run.path === workflowPath
+    )
+    .sort((a, b) =>
+      Date.parse(b.updated_at) - Date.parse(a.updated_at)
+    );
+
+  if (candidates.length === 0) {
+    throw new Error(
+      `No completed workflow run found for workflow ${workflowPath}`
+    );
+  }
+
+  return candidates[0].id;
+}
+```
+
+O comportamento final fica assim:
+
+```text
+workflow_run:
+  github.event.workflow_run.id
         │
-        │ result_provenance_binding
-        ▼
-E4 — TEST_RESULT
+        └── coleta exatamente a execução que terminou
+
+workflow_dispatch:
+  inputs.workflow_run_id
         │
-        │ semantic interpretation
-        ▼
-TEST_CLAIM_EVALUATION
+        └── coleta o ID informado
 
-Nunca:
+schedule:
+  nenhum ID
+        │
+        └── resolve a execução concluída mais recente
+```
 
-E3
- ↓
-TEST_PASSED
+## Validação adicional do evento
 
-Assim:
+Mesmo recebendo o ID pelo evento, o coletor ainda deve verificar a identidade completa:
 
-RUN_COMPLETED = SUCCESS
+```ts
+if (process.env.EVIDENCE_EVENT_NAME === "workflow_run") {
+  if (run.status !== "completed") {
+    throw new Error("WORKFLOW_RUN_EVENT_NOT_COMPLETED");
+  }
 
-não implica:
+  if (
+    run.repository.toLowerCase() !==
+    config.sources.github_actions.repositories[0].toLowerCase()
+  ) {
+    throw new Error("WORKFLOW_RUN_REPOSITORY_MISMATCH");
+  }
 
-TEST_PASSED = TRUE
-
-E:
-
-TEST_PASSED = TRUE
-
-não implica:
-
-VERIFIED = TRUE
-
----
-
-9. API_EXECUTION
-
-O seguinte representa um schema, não uma execução observada:
-
-{
-  "evidence_type": "API_EXECUTION",
-  "execution": {
-    "provider": "GitHub Actions",
-    "workflow": "RunPester",
-    "run_id": "...",
-    "commit_sha": "...",
-    "runner": "ubuntu-latest"
+  if (
+    run.path !==
+    config.sources.github_actions.workflows[0].path
+  ) {
+    throw new Error("WORKFLOW_RUN_WORKFLOW_MISMATCH");
   }
 }
+```
 
-A distinção normativa é:
+O fluxo recomendado passa a ser:
 
-SCHEMA
-  ≠
-INSTANCE
-  ≠
-OBSERVED EVENT
-
-Portanto:
-
-API_EXECUTION_SCHEMA = ESTABLISHED
-API_EXECUTION_EVENT  = NOT_ESTABLISHED
-
-O estado:
-
-API_EXECUTION_EVENT = OBSERVED
-
-somente poderá ser atribuído quando existir uma instância operacional real e resolvida.
-
----
-
-10. Dependência operacional ≠ implicação lógica
-
-Uma etapa pode ser pré-requisito operacional para uma etapa posterior sem que a primeira implique logicamente a segunda.
-
-Por exemplo:
-
-E3 ESTABLISHED
-
-pode permitir:
-
-SEARCH / RESOLVE / VALIDATE E4
-
-mas não significa:
-
-E3 → E4
-
-Da mesma forma:
-
-E5 ESTABLISHED
-
-pode fornecer os inputs necessários para executar E6, mas não significa:
-
-E5 → E6
-
-E:
-
-E6 PERFORMED
-
-pode gerar uma saída verificável que será registrada como E7, mas isso não significa que o resultado seja "PASS".
-
-Portanto:
-
-OPERATIONAL PRECONDITION
-        ≠
-LOGICAL IMPLICATION
-
----
-
-11. Promotion Decision
-
-A promoção deve ser representada separadamente:
-
-PROMOTE(
-    claim,
-    evidence_set,
-    policy
-)
-
-com:
-
-IF
-    CLAIM_SCOPE_VALID
-AND EVIDENCE_SUFFICIENT
-AND REQUIRED_BINDINGS_RESOLVED
-AND INTEGRITY_VALID
-AND PROVENANCE_VALID
-AND EXECUTION_CONTEXT_VALID
-AND RESULT_VALID
-AND INDEPENDENT_VERIFICATION_EXECUTED
-AND VERIFICATION_RESULT_VALID
-AND POLICY_EVALUATION = PASS
-THEN
-    PROMOTION_DECISION = VERIFIED
-ELSE
-    PROMOTION_DECISION = NOT_PROMOTABLE
-
-A promoção não é o resultado bruto da verificação.
-
-VERIFICATION_RESULT
-        +
-POLICY_EVALUATION
-        +
-CLAIM_SCOPE
-        +
-EVIDENCE_SUFFICIENCY
-        +
-REQUIRED_BINDINGS
+```text
+workflow monitorado termina
         │
         ▼
-PROMOTION_DECISION
+workflow_run: completed
         │
-        ├──► VERIFIED
+        ▼
+evidence.yml recebe workflow_run.id
         │
-        └──► NOT_PROMOTABLE
+        ▼
+busca execução, jobs e artefatos
+        │
+        ▼
+valida identidade e estado completed
+        │
+        ▼
+cria registro canônico
+        │
+        ▼
+calcula leaf_hash e prova Merkle
+        │
+        ▼
+gera VERIFIED
+        │
+        ▼
+assina o bundle
+        │
+        ▼
+publica o artifact
+```
 
-Logo:
-
-PASS ≠ CONFORMANCE
-PASS ≠ VERIFIED
-
----
-
-12. Estado atual versus estado futuro
-
-CURRENT STATE
-
-CONFIGURATION         = YES
-EXECUTION             = NO
-RESULT                = NO
-CRYPTOGRAPHIC_BINDING = NO
-VERIFICATION_EVENT    = NO
-VERIFICATION_RESULT   = NO
-TEST_PASSED           = UNVERIFIED
-VERIFIED              = NO
-
-POSSIBLE FUTURE STATE
-
-Somente após evidência operacional real:
-
-API_EXECUTION_EVENT = OBSERVED
-
-poderá ser estabelecido:
-
-E3 = ESTABLISHED
-
-Depois, se houver evidência de resultado devidamente vinculada:
-
-E4 = ESTABLISHED
-
-Depois, se os bindings criptográficos forem efetivamente resolvidos:
-
-E5 = ESTABLISHED
-
-Depois, se um verificador independente for realmente executado:
-
-E6 = PERFORMED
-
-E somente se seu resultado for observado:
-
-E7 = PASS
-
-ou:
-
-E7 = FAIL
-
-ou:
-
-E7 = INSUFFICIENT_EVIDENCE
-
-ou:
-
-E7 = NOT_PROMOTABLE
-
-Finalmente, somente a Promotion Decision, dentro do escopo da claim e segundo a política aplicável, poderá produzir:
-
-VERIFIED
-
----
-
-13. Invariante XA-TRUST
-
-EVIDENCE
-   ≠
-EXECUTION
-   ≠
-RESULT
-   ≠
-VERIFICATION_EVENT
-   ≠
-VERIFICATION_RESULT
-   ≠
-PROMOTION_DECISION
-   ≠
-VERIFIED
-
-E:
-
-E1–E7
-=
-TYPED EVIDENCE / EVENT / RESULT NODES
-
-relacionados por:
-
-BINDING
-RESOLUTION
-PROVENANCE
-EVALUATION
-
-e não por implicação automática ou herança de estado.
-
-Regra final
-
-NO AUTOMATIC PROMOTION
-
-Nenhum artefato, configuração, execução, resultado, hash, assinatura, evento de verificação ou resultado "PASS", isoladamente, constitui "VERIFIED".
-
-"VERIFIED" é uma propriedade claim-scoped produzida por uma decisão de promoção, após o conjunto de evidências, bindings, verificações e política exigidos terem sido efetivamente satisfeitos.
+Assim, o workflow de evidência não apenas “procura a execução mais recente”: quando acionado por `workflow_run`, ele verifica e coleta exatamente a execução que disparou o processo.
 
