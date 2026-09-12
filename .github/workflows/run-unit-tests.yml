@@ -219,3 +219,323 @@ publica o artifact
 
 Assim, o workflow de evidência não apenas “procura a execução mais recente”: quando acionado por `workflow_run`, ele verifica e coleta exatamente a execução que disparou o processo.
 
+
+O conteúdo está conceitualmente correto, mas precisa ser separado em arquivos diferentes. `name: CI` não pode ficar dentro de `evidence.yml`, e o bloco `github_actions` pertence ao `evidence.yaml`, não ao YAML do workflow.
+
+A estrutura correta é:
+
+```text
+.github/
+└── workflows/
+    ├── ci.yml
+    └── evidence.yml
+
+evidence.yaml
+src/cli/collect.ts
+```
+
+## `.github/workflows/ci.yml`
+
+```yaml
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - run: npm test
+```
+
+## `.github/workflows/evidence.yml`
+
+```yaml
+name: Evidence Collection
+
+on:
+  workflow_run:
+    workflows:
+      - CI
+    types:
+      - completed
+
+  workflow_dispatch:
+    inputs:
+      workflow_run_id:
+        description: "GitHub Actions workflow run ID"
+        required: false
+        type: string
+
+  schedule:
+    - cron: "0 2 * * 1"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  collect-evidence:
+    if: >
+      github.event_name != 'workflow_run' ||
+      github.event.workflow_run.status == 'completed'
+
+    runs-on: ubuntu-latest
+
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      EVIDENCE_SIGNING_KEY: ${{ secrets.EVIDENCE_SIGNING_KEY }}
+      EVIDENCE_REPOSITORY: ${{ github.repository }}
+      EVIDENCE_EVENT_NAME: ${{ github.event_name }}
+
+      EVIDENCE_WORKFLOW_RUN_ID: >-
+        ${{ inputs.workflow_run_id || github.event.workflow_run.id || '' }}
+
+    steps:
+      - name: Checkout evidence verifier
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate configuration
+        run: npm run evidence:validate
+
+      - name: Collect, verify and sign evidence
+        run: npm run evidence:collect
+
+      - name: Verify signed evidence bundle
+        run: npm run evidence:verify
+
+      - name: Upload evidence bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: github-actions-evidence-${{ github.run_id }}
+          path: |
+            evidence-output/bundle.json
+            evidence-output/verification.json
+            evidence-output/signature.json
+          if-no-files-found: error
+          retention-days: 365
+```
+
+## `evidence.yaml`
+
+```yaml
+framework: soc2_type1
+
+controls:
+  - CC7.2
+
+sources:
+  github:
+    mode: token
+    token_env: GITHUB_TOKEN
+    org: acme
+    repos:
+      - acme/backend
+
+  github_actions:
+    enabled: true
+    github_source: github
+
+    repositories:
+      - acme/backend
+
+    workflows:
+      - path: .github/workflows/ci.yml
+        name: CI
+
+    runs:
+      status: completed
+      conclusion:
+        - success
+        - failure
+
+    collect:
+      workflow_run: true
+      jobs: true
+      artifacts: true
+      logs: false
+
+    verification:
+      resolve_from_github: true
+      require_repository_match: true
+      require_workflow_match: true
+      require_run_attempt: true
+      require_head_sha: true
+      require_completed_run: true
+      require_canonical_record: true
+      require_artifact_binding: true
+
+bundle:
+  signing:
+    private_key_env: EVIDENCE_SIGNING_KEY
+  max_size_mb: 50
+```
+
+## Ajuste do `collect.ts`
+
+A validação deve ocorrer depois de buscar `run`, mas antes de coletar jobs, artefatos e gerar o bundle:
+
+```ts
+const expectedRepository =
+  config.sources.github_actions.repositories[0];
+
+const workflowConfig =
+  config.sources.github_actions.workflows[0];
+
+const expectedWorkflow =
+  workflowConfig.path;
+
+const expectedWorkflowName =
+  workflowConfig.name;
+
+const explicitRunId =
+  process.env.EVIDENCE_WORKFLOW_RUN_ID?.trim() || undefined;
+
+const runId = await resolveWorkflowRunId(
+  github,
+  owner,
+  repo,
+  expectedWorkflow,
+  explicitRunId
+);
+
+const run = await getWorkflowRun(
+  github,
+  owner,
+  repo,
+  runId
+);
+
+if (process.env.EVIDENCE_EVENT_NAME === "workflow_run") {
+  const event = JSON.parse(
+    readFileSync(
+      process.env.GITHUB_EVENT_PATH!,
+      "utf8"
+    )
+  );
+
+  const eventRun = event.workflow_run;
+
+  if (!eventRun) {
+    throw new Error("WORKFLOW_RUN_EVENT_MISSING");
+  }
+
+  if (Number(eventRun.id) !== run.id) {
+    throw new Error("WORKFLOW_RUN_ID_MISMATCH");
+  }
+
+  if (eventRun.name !== expectedWorkflowName) {
+    throw new Error("WORKFLOW_RUN_NAME_MISMATCH");
+  }
+
+  if (eventRun.path !== expectedWorkflow) {
+    throw new Error("WORKFLOW_RUN_PATH_MISMATCH");
+  }
+
+  if (eventRun.status !== "completed") {
+    throw new Error("WORKFLOW_RUN_NOT_COMPLETED");
+  }
+}
+
+const jobs = await getWorkflowJobs(
+  github,
+  owner,
+  repo,
+  run.id
+);
+
+const artifacts = await getWorkflowArtifacts(
+  github,
+  owner,
+  repo,
+  run.id
+);
+
+const executionId =
+  `${run.repository}:${run.id}:${run.run_attempt}:${run.head_sha}`;
+
+const record = createCanonicalExecutionRecord({
+  executionId,
+  run,
+  jobs,
+  artifacts
+});
+
+const identity = verifyRunIdentity(record, {
+  repository: expectedRepository,
+  workflowPath: expectedWorkflow,
+  workflowRunId: run.id,
+  runAttempt: run.run_attempt,
+  headSha: run.head_sha
+});
+
+if (!identity.valid) {
+  throw new Error(
+    `Workflow identity verification failed: ${
+      identity.failures.join(", ")
+    }`
+  );
+}
+```
+
+Também é necessário importar:
+
+```ts
+import { readFileSync } from "node:fs";
+```
+
+O ponto lógico mais importante é esta validação:
+
+```ts
+if (Number(eventRun.id) !== run.id) {
+  throw new Error("WORKFLOW_RUN_ID_MISMATCH");
+}
+```
+
+Ela impede que o coletor receba o ID de uma execução, resolva outra execução pela API e ainda assim produza um bundle considerado válido.
+
+O fluxo final fica:
+
+```text
+CI termina
+  → workflow_run.completed
+  → event.workflow_run.id
+  → resolução do mesmo ID pela API
+  → validação de ID, nome, caminho, repositório e status
+  → coleta de jobs e artefatos
+  → registro canônico
+  → hash e prova Merkle
+  → VERIFIED
+  → assinatura
+  → upload do bundle
+```
+
+Em `schedule`, como não existe `workflow_run.id`, o coletor continua usando a execução concluída mais recente como fallback.
+
