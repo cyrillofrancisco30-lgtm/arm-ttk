@@ -28,6 +28,48 @@ INDEPENDENT_VERIFICATION
         ▼
 E7
 VERIFICATION_RESULT
+
+
+E1 ≠ E2 ≠ E3 ≠ E4 ≠ E5 ≠ E6 ≠ E7
+
+
+
+E1 ↛ E3
+E1 ↛ E4
+
+E2 ↛ E3
+E2 ↛ E4
+
+E3 ↛ E4
+
+E4 ↛ E6
+E5 ↛ E6
+
+E6 ↛ E7
+
+E1 TEST_FIXTURE_EVIDENCE
+E2 WORKFLOW_CONFIGURATION_EVIDENCE
+E3 EXECUTION_EVENT_EVIDENCE
+E4 TEST_RESULT_EVIDENCE
+E5 CRYPTOGRAPHIC_BINDING_EVIDENCE
+
+
+
+VERIFICATION_EXECUTION_EVENT
+
+
+INDEPENDENT_VERIFICATION_EVENT
+
+
+VERIFICATION_RESULT
+
+
+VERIFICATION_EVIDENCE
+
+VERIFICATION_EVENT
+
+VERIFICATION_RESULT
+
 E cada transição precisa de uma regra.
 Não existe:
 E1 → E4
@@ -431,3 +473,262 @@ jobs:
         if: ${{always()}}
 env: 
   ModulePath: .\arm-ttk\arm-ttk.psd1
+
+{
+  "evidence_type":
+
+ "API_EXECUTION",
+  "execution": {
+    "provider": "GitHub Actions",
+    "workflow": "RunPester",
+    "run_id": "...",
+    "commit_sha": "...",
+    "runner": "ubuntu-latest"
+  }
+} j
+
+
+API_EXECUTION_SCHEMA = ESTABLISHED
+
+
+
+API_EXECUTION_EVENT = OBSERVED
+
+
+RUN_ID
+COMMIT_SHA
+WORKFLOW_IDENTITY
+JOB_ID
+STEP_ID
+EXECUTION_STATUS
+TIMESTAMP
+RAW_OUTPUT
+ARTIFACT_IDENTITY
+
+
+RUN_ID
+ ↔ WORKFLOW
+ ↔ COMMIT_SHA
+ ↔ JOB
+ ↔ STEP
+ ↔ RAW_RESULT
+ ↔ ARTIFACT
+
+
+{
+  "execution_status": "COMPLETED"
+}
+
+
+EXECUTION_COMPLETION
+
+
+RUN_COMPLETED
+        ≠
+STEP_COMPLETED
+        ≠
+TEST_SUITE_EXECUTED
+        ≠
+TEST_SUITE_PASSED
+
+
+workflow completed
+        +
+RunPester executed
+        +
+PesterResults.xml captured
+
+
+TEST_PASSED
+
+
+
+TEST RESULT
+     ↓
+CRYPTOGRAPHIC EVIDENCE
+
+
+E4 TEST_RESULT
+       │
+       │ artifact_identity_binding
+       ▼
+E5 CRYPTOGRAPHIC_BINDING
+
+
+
+
+HASH(result_bytes)
+        =
+IDENTITY(result_artifact)
+
+
+HASH ≠ TRUTH
+HASH ≠ TEST_PASS
+HASH ≠ EXECUTION_PROOF
+HASH ≠ VERIFICATION
+
+
+
+CLAIM
+"LocationValueAllowed test passed"
+        │
+        ▼
+CLAIM DECOMPOSITION
+        │
+   ┌────┴────┐
+   ▼         ▼
+FIXTURE    EXECUTION
+   │         │
+   ▼         ▼
+OBSERVED   OBSERVED
+   └────┬────┘
+        ▼
+   VERIFICATION
+        │
+   ┌────┴────┐
+   ▼         ▼
+SUFFICIENT  INSUFFICIENT
+
+
+
+CLAIM
+"LocationValueAllowed test passed"
+              │
+              ▼
+      CLAIM DECOMPOSITION
+              │
+       ┌──────┼──────┐
+       ▼      ▼      ▼
+    FIXTURE EXECUTION RESULT
+       │      │      │
+       └──────┼──────┘
+              ▼
+       CRYPTOGRAPHIC
+          BINDING
+              │
+              ▼
+     INDEPENDENT VERIFIER
+              │
+              ▼
+       CLAIM EVALUATION
+              │
+       ┌──────┴──────┐
+       ▼             ▼
+   VERIFIED      NOT_PROMOTABLE
+
+
+FIXTURE → TEST_PASSED
+
+
+
+WORKFLOW → TEST_PASSED
+
+
+
+PROMOTE(claim, evidence_set, policy)
+
+
+VERIFIED iff
+
+    CLAIM_SCOPE_VALID
+∧   EVIDENCE_SUFFICIENT
+∧   REQUIRED_BINDINGS_RESOLVED
+∧   INTEGRITY_VALID
+∧   PROVENANCE_VALID
+∧   EXECUTION_CONTEXT_VALID
+∧   RESULT_VALID
+∧   INDEPENDENT_VERIFICATION_EXECUTED
+∧   POLICY_EVALUATION = PASS
+
+
+NOT_PROMOTABLE
+
+
+VERIFIED(claim_A)
+
+
+VERIFIED(claim_B)
+
+
+PUBLIC_REPOSITORY_ARTIFACT       = ESTABLISHED
+FORK_RELATIONSHIP                = ESTABLISHED
+
+TEST_FIXTURE                     = RESOLVABLE
+WORKFLOW_DEFINITION              = ESTABLISHED
+WORKFLOW_CONFIGURATION           = ESTABLISHED
+
+EXECUTION_EVENT                  = NOT_ESTABLISHED
+TEST_RESULT                      = NOT_ESTABLISHED
+CRYPTOGRAPHIC_BINDING            = NOT_ESTABLISHED
+
+INDEPENDENT_VERIFICATION         = NOT_PERFORMED
+VERIFICATION_RESULT              = NOT_ESTABLISHED
+
+TEST_PASSED                      = UNVERIFIED
+AZURE_EXECUTION                  = NOT_ESTABLISHED
+AZURE_APPROVAL                   = NOT_ESTABLISHED
+REGULATORY_ACCEPTANCE            = NOT_ESTABLISHED
+
+
+WORKFLOW_DEFINITION_CONTENT_OBSERVED
+
+
+VALID_GITHUB_ACTIONS_WORKFLOW
+
+
+ARTIFACT_LOCATION
+      ≠
+EXECUTABLE_VALIDITY
+      ≠
+EXECUTION
+      ≠
+RESULT
+
+
+
+
+
+
+
+SOURCE
+  ↓
+FIXTURE
+  ↓
+WORKFLOW
+  ↓
+[REQUIRED EXECUTION BINDING]
+  ↓
+EXECUTION
+  ↓
+RESULT
+  ↓
+[REQUIRED CRYPTOGRAPHIC BINDING]
+  ↓
+INDEPENDENT VERIFICATION
+  ↓
+CLAIM-SCOPED RESULT
+
+
+EVIDENCE
+    ≠
+EXECUTION
+    ≠
+RESULT
+    ≠
+VERIFICATION
+    ≠
+VERIFIED
+
+
+VERIFIED
+=
+PROPERTY(
+    CLAIM,
+    SEMANTIC_SCOPE,
+    EVIDENCE_SET,
+    BINDINGS,
+    POLICY,
+    INDEPENDENT_VERIFICATION
+)
+
+
