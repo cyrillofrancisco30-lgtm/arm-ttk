@@ -285,12 +285,97 @@ REGULATORY_ACCEPTANCE
     }
   ],
   "status": "OBSERVATIONS_NOT_PROMOTED_TO_BUG"
+  
 }{
   "claim_id": "CI_AUTOMATED_TEST_EXECUTION",
   "evidence_type": "ExternalServiceEvent",
   "provider": "GitHub Actions",
   "repository": "cyrillofrancisco30-lgtm/arm-ttk",
   "workflow": "RunPester",
+
+
+
+
+
+  Sim. Com a inspeção atual do arquivo, eu congelaria essa arquitetura, mas com uma pequena mudança terminológica para deixá-la ainda mais formal: E1–E5 são evidências/objetos de evidência; E6 é um evento de verificação; E7 é o resultado de uma avaliação de claim. O arquivo público realmente contém a cadeia E1–E7, as regras de não-implicação e os exemplos de API_CONFIGURATION/API_EXECUTION. 
+
+Forma normativa recomendada XA-TRUST EVIDENCE GRAPH E1 ─ TEST_FIXTURE │ │ fixture_identity / artifact_binding │ E2 ─ WORKFLOW_DEFINITION │ │ workflow_execution_binding ▼ E3 ─ EXECUTION_EVENT │ │ result_provenance_binding ▼ E4 ─ TEST_RESULT │ │ integrity_binding ▼ E5 ─ CRYPTOGRAPHIC_BINDING │ │ verifier_input_resolution ▼ E6 ─ INDEPENDENT_VERIFICATION │ │ deterministic claim evaluation ▼ E7 ─ VERIFICATION_RESULT 
+
+Mas o grafo não deve ser interpretado como herança de estado.
+
+Formalmente:
+
+E1 ≠ E2 ≠ E3 ≠ E4 ≠ E5 ≠ E6 ≠ E7 
+
+e:
+
+E1 ↛ E3 E1 ↛ E4 E2 ↛ E3 E2 ↛ E4 E3 ↛ E4 E4 ↛ E6 E5 ↛ E6 E6 ↛ E7 
+
+Cada promoção depende de uma regra explícita.
+
+O ponto mais forte 
+
+A definição atual do workflow demonstra exatamente essa fronteira: ele declara RunPester, seus triggers, ubuntu-latest, a execução de Pester e o artefato PesterResults, mas o próprio conteúdo explicita que isso não implica WORKFLOW_RUN, TEST_EXECUTION, TEST_PASS, AZURE_EXECUTION, aprovação ou aceitação regulatória. 
+
+Portanto:
+
+WORKFLOW_CONFIGURATION_EVIDENCE ≠ EXECUTION_EVIDENCE 
+
+e:
+
+EXECUTION_EVIDENCE ≠ TEST_RESULT_EVIDENCE 
+
+e:
+
+TEST_RESULT_EVIDENCE ≠ VERIFICATION_RESULT Eu acrescentaria uma regra fundamental 
+
+A promoção deveria ser definida como uma função, não como uma consequência:
+
+PROMOTE(claim, evidence_set, policy) = VERIFIED iff CLAIM_SCOPE_VALID ∧ EVIDENCE_SUFFICIENT ∧ ALL_REQUIRED_BINDINGS_RESOLVED ∧ INTEGRITY_VALID ∧ PROVENANCE_VALID ∧ EXECUTION_CONTEXT_VALID ∧ INDEPENDENT_VERIFICATION_VALID ∧ POLICY_EVALUATION = PASS 
+
+Caso contrário:
+
+PROMOTE(...) = NOT_PROMOTABLE 
+
+Isso evita que VERIFIED seja tratado como uma propriedade global do repositório, workflow ou artefato.
+
+E7 precisa permanecer local ao claim 
+
+Por exemplo:
+
+{ "claim_id": "CLAIM-ARM-TTK-LOCATION-VALUE-001", "predicate": "TEST_PASSED", "semantic_scope": [ "specific_fixture", "specific_workflow_run", "specific_test_result" ], "verification_result": "VERIFIED" } 
+
+Isso não autoriza:
+
+VERIFIED(TEST_PASSED) ↛ VERIFIED(AZURE_EXECUTION) ↛ VERIFIED(AZURE_APPROVAL) ↛ VERIFIED(REGULATORY_ACCEPTANCE) 
+
+Essa é provavelmente a parte mais importante da arquitetura.
+
+Estado atual do arm-ttk 
+
+Com base no artefato público que consultei:
+
+PUBLIC_REPOSITORY_ARTIFACT = ESTABLISHED FORK_RELATIONSHIP = ESTABLISHED TEST_FIXTURE = RESOLVABLE WORKFLOW_DEFINITION = ESTABLISHED EXECUTION_EVENT = NOT_ESTABLISHED TEST_RESULT = NOT_ESTABLISHED CRYPTOGRAPHIC_BINDING = NOT_ESTABLISHED INDEPENDENT_VERIFICATION = NOT_PERFORMED VERIFICATION_RESULT = NOT_ESTABLISHED TEST_PASSED = UNVERIFIED AZURE_EXECUTION = NOT_ESTABLISHED AZURE_APPROVAL = NOT_ESTABLISHED REGULATORY_ACCEPTANCE = NOT_ESTABLISHED 
+
+O GitHub apresenta inclusive View runs separadamente do conteúdo do workflow, reforçando que a definição do pipeline e seus eventos de execução são objetos distintos. 
+
+Conclusão 
+
+Sim: isso já pode ser tratado como uma especificação formal de VERIFICATION_EVIDENCE do XA-TRUST.
+
+A contribuição central não é simplesmente registrar mais evidências. É estabelecer uma lógica de promoção explícita:
+
+DECLARATION ↓ EVIDENCE ↓ BINDING ↓ EXECUTION ↓ RESULT ↓ INDEPENDENT VERIFICATION ↓ CLAIM-SCOPED VERIFICATION_RESULT 
+
+sem qualquer salto implícito.
+
+Em outras palavras:
+
+o XA-TRUST não pergunta apenas “há evidência?”; pergunta “qual claim essa evidência suporta, por qual binding, em qual semantic scope, mediante qual regra de promoção?”
+
+Essa é a formulação que fecha a brecha entre evidência declarativa, evidência operacional, integridade, execução e verificação. 
+
+
   "workflow_file": ".github/workflows/run-unit-tests.yml",
   "execution_environment": "ubuntu-latest",
   "test_framework": "Pester",
