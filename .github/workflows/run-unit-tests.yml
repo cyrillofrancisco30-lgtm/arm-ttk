@@ -1,4 +1,74 @@
+PUBLIC_REPOSITORY_ARTIFACT
+│
+▼
+E1 — TEST_FIXTURE_EVIDENCE
+│ fixture_identity / artifact_binding
+▼
+E2 — WORKFLOW_CONFIGURATION_EVIDENCE
+│ workflow_execution_binding
+▼
+E3 — EXECUTION_EVENT_EVIDENCE
+│ result_provenance_binding
+▼
+E4 — TEST_RESULT_EVIDENCE
+│ artifact_identity_binding
+▼
+E5 — CRYPTOGRAPHIC_BINDING_EVIDENCE
+│ verifier_input_resolution
+▼
+E6 — INDEPENDENT_VERIFICATION_EVENT
+│ deterministic_claim_evaluation
+▼
+E7 — VERIFICATION_RESULT
 
+
+PUBLIC_REPOSITORY_ARTIFACT
+        │
+        ▼
+E1 — TEST_FIXTURE_EVIDENCE
+        │
+        │ fixture_identity / artifact_binding
+        ▼
+E2 — WORKFLOW_CONFIGURATION_EVIDENCE
+        │
+        │ workflow_execution_binding
+        ▼
+E3 — EXECUTION_EVENT_EVIDENCE
+        │
+        │ result_provenance_binding
+        ▼
+E4 — TEST_RESULT_EVIDENCE
+        │
+        │ artifact_identity_binding
+        ▼
+E5 — CRYPTOGRAPHIC_BINDING_EVIDENCE
+        │
+        │ verifier_input_resolution
+        ▼
+E6 — INDEPENDENT_VERIFICATION_EVENT
+        │
+        │ deterministic_claim_evaluation
+        ▼
+E7 — VERIFICATION_RESULT
+
+
+Elemento	Status
+
+PUBLIC_REPOSITORY_ARTIFACT	ESTABLISHED
+FORK_RELATIONSHIP	ESTABLISHED
+WORKFLOW_DEFINITION	ESTABLISHED
+WORKFLOW_CONFIGURATION	ESTABLISHED
+EXECUTION_EVENT	NOT_ESTABLISHED
+TEST_RESULT	NOT_ESTABLISHED
+CRYPTOGRAPHIC_BINDING	NOT_ESTABLISHED
+INDEPENDENT_VERIFICATION	NOT_PERFORMED
+VERIFICATION_RESULT	NOT_ESTABLISHED
+TEST_PASSED	UNVERIFIED
+
+
+WORKFLOW_CONFIGURATION_EVIDENCE
+        ↛
+EXECUTION_EVENT_EVIDENCE
 PUBLIC_REPOSITORY_ARTIFACT
         │
         ▼
