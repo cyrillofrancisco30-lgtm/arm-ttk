@@ -2,7 +2,266 @@ FROZEN — GITHUB WORKFLOW EXECUTION EVIDENCE
 
 "workflow_run" with "types: [completed]" constitutes a valid GitHub Actions mechanism for observing the completion event of another workflow.
 
-The observation of "workflow_run.completed" establishes an execution-event observation within the semantic scope of the referenced workflow run.
+The observation of
+Sim. Com a consolidação que você trouxe, o modelo fica coerente com o XA-TRUST e pronto para ser tratado como uma cadeia formal de promoção de evidência, com uma correção conceitual importante: o fluxo não deve ser interpretado como uma cadeia causal automática. Cada camada deve manter sua própria identidade, escopo e binding.
+
+Estrutura formal consolidada
+
+CLAIM SCOPE
+     ≠
+SERVICE SCOPE
+     ≠
+TEAM SCOPE
+     ≠
+REQUEST SCOPE
+
+Isso é fundamental porque:
+
+TEAM CONFIGURATION
+        │
+        │ scope = TEAM
+        ▼
+   ZDR ENABLED
+        │
+        │ contextualizes
+        ▼
+    REQUEST-X
+        │
+        ▼
+    RESPONSE-X
+        │
+        │ header observed
+        ▼
+x-zero-data-retention=true
+
+O resultado correto não é:
+
+ZDR globally VERIFIED
+
+mas:
+
+CLAIM-001
+
+REQUEST-X was processed under a response context
+reporting:
+
+x-zero-data-retention = "true"
+
+
+---
+
+FROZEN — XAI ZDR EVIDENCE BOUNDARY
+
+ZDR_DOCUMENTATION
+        ≠
+ZDR_CONFIGURATION
+        ≠
+ZDR_EXECUTION_CONTEXT
+        ≠
+ZDR_TEST_RESULT
+        ≠
+ZDR_CONTENT_RETENTION_EVIDENCE
+        ≠
+ZDR_CONTENT_DELETION_PROOF
+        ≠
+CRYPTOGRAPHIC_PROOF
+        ≠
+INDEPENDENT_VERIFICATION
+
+Essa separação deve permanecer invariante.
+
+Em particular:
+
+ZDR = true
+
+não equivale a:
+
+CONTENT_DELETED = true
+
+e muito menos:
+
+CRYPTOGRAPHICALLY_PROVEN = true
+
+
+---
+
+Cadeia de promoção
+
+A sua cadeia pode ser formalizada assim:
+
+ZDR_DOCUMENTATION
+        │
+        └── NÃO promove diretamente
+            para VERIFIED
+
+ZDR_CONFIGURATION
+        │
+        └── NÃO promove diretamente
+            para VERIFIED
+
+ZDR_EXECUTION_CONTEXT
+        │
+        ▼
+REQUEST/RESPONSE BINDING
+        │
+        ▼
+TEST RESULT
+        │
+        ▼
+INTEGRITY VALIDATION
+        │
+        ▼
+INDEPENDENT VERIFICATION
+        │
+        ▼
+CLAIM-SCOPED VERIFIED
+
+Formalmente:
+
+VERIFIED(CLAIM-001)
+iff
+
+SufficientEvidence(CLAIM-001)
+∧ ValidBinding(CLAIM-001)
+∧ IntegrityValid(CLAIM-001)
+∧ IndependentVerification(CLAIM-001)
+
+
+---
+
+Evidência por camada
+
+Artefato	Classificação XA-TRUST	Escopo
+
+Security FAQ	SOURCE_ARTIFACT	provider/service
+ZDR documentation	POLICY_EVIDENCE	policy
+Team Settings: ZDR Active	CONFIGURATION_EVIDENCE	TEAM
+API request	REQUEST_ARTIFACT	REQUEST
+API response	RESPONSE_ARTIFACT	REQUEST/RESPONSE
+x-zero-data-retention=true	EXECUTION_CONTEXT_EVIDENCE	REQUEST
+E3	EXECUTION_EVENT_EVIDENCE	execution
+E4	TEST_RESULT_EVIDENCE	claim/test
+E5	CRYPTOGRAPHIC_BINDING_EVIDENCE	artifact/binding
+E6	INDEPENDENT_VERIFICATION_EVENT	verification
+E7	VERIFICATION_RESULT	CLAIM
+SOC 2	ATTESTATION_CLAIM	defined audit scope
+HIPAA/BAA	PROCESS_EVIDENCE	contractual/process
+Secret scanning	CONTROL_DECLARATION	security control
+Key disable	EXECUTION_EVIDENCE	specific key/event
+
+
+
+---
+
+Ponto crítico sobre E3
+
+Eu faria uma distinção explícita:
+
+x-zero-data-retention=true
+
+não é, sozinho, E3.
+
+Ele é um atributo observado no RESPONSE_ARTIFACT que pode alimentar o contexto de execução.
+
+Assim:
+
+REQUEST-X
+   │
+   ├── request metadata
+   ├── timestamp
+   ├── team
+   ├── principal
+   └── operation
+          │
+          ▼
+E3 — EXECUTION_EVENT_EVIDENCE
+          │
+          ▼
+RESPONSE-X
+          │
+          └── x-zero-data-retention=true
+                    │
+                    ▼
+          E4 — TEST_RESULT_EVIDENCE
+
+Isso preserva rigorosamente:
+
+EXECUTION ≠ RESULT
+
+
+---
+
+Pipeline XA-TRUST definitivo
+
+XAI SECURITY FAQ
+                           │
+                           ▼
+                    SOURCE_ARTIFACT
+                           │
+             ┌─────────────┼─────────────┐
+             ▼             ▼             ▼
+          POLICY      CONFIGURATION     AUDIT
+             │             │             │
+             └─────────────┼─────────────┘
+                           ▼
+                    TEAM ZDR STATE
+                           │
+                           │
+                           │ contextual scope
+                           ▼
+                       REQUEST-X
+                           │
+                           ▼
+                      RESPONSE-X
+                           │
+                  ┌────────┴────────┐
+                  ▼                 ▼
+             ZDR HEADER       RESPONSE ARTIFACT
+                  │                 │
+                  └────────┬────────┘
+                           ▼
+              EXECUTION CONTEXT EVIDENCE
+                           │
+                           ▼
+                    E3 EXECUTION
+                           │
+                           ▼
+                    E4 TEST RESULT
+                           │
+                           ▼
+                 E5 CRYPTO BINDING
+                           │
+                           ▼
+              E6 INDEPENDENT CHECK
+                           │
+                           ▼
+                 E7 CLAIM VERIFIED
+
+Resultado XA-TRUST
+
+O estado final deve ser lido como:
+
+TEAM ZDR CONFIGURATION
+        +
+REQUEST-X
+        +
+RESPONSE-X
+        +
+x-zero-data-retention=true
+        +
+REQUEST/RESPONSE BINDING
+        +
+INTEGRITY
+        +
+INDEPENDENT VERIFICATION
+        ↓
+CLAIM-001 = VERIFIED
+
+somente para o claim definido, e não para uma propriedade global do serviço.
+
+Essa última restrição é particularmente importante: E7 é sempre CLAIM-SCOPED. Não existe promoção automática de um VERIFIED(CLAIM-001) para VERIFIED(XAI/ZDR) global.
+
+Essa é a forma mais forte e auditável de incorporar o FAQ da xAI ao Evidence Graph XA-TRUST, sem converter documentação do provedor em prova de execução nem prova criptográfica. "workflow_run.completed" establishes an execution-event observation within the semantic scope of the referenced workflow run.
 
 It does not, by itself, establish test success, semantic conformance, independent verification, or VERIFIED status.
 
