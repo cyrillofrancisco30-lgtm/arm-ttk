@@ -1,4 +1,117 @@
-CI WORKFLOW
+EXECUTION_CONTEXT
+│
+├── EXECUTION_IDENTITY
+│   ├── GITHUB_RUN_ID
+│   ├── GITHUB_RUN_NUMBER
+│   └── GITHUB_RUN_ATTEMPT
+│
+├── SOURCE_IDENTITY
+│   ├── GITHUB_REPOSITORY
+│   ├── GITHUB_SHA
+│   ├── GITHUB_REF
+│   └── GITHUB_WORKFLOW_SHA
+│
+├── WORKFLOW_IDENTITY
+│   ├── GITHUB_WORKFLOW
+│   ├── GITHUB_WORKFLOW_REF
+│   ├── GITHUB_EVENT_NAME
+│   └── GITHUB_JOB
+│
+├── TEMPORAL_IDENTITY
+│   ├── run start
+│   ├── run completion
+│   └── event/commit timestamps
+│
+├── RUNNER_IDENTITY
+│   ├── runner version
+│   ├── runner environment
+│   └── runner instance metadata
+│
+├── IMAGE_IDENTITY
+│   ├── ImageOS
+│   └── ImageVersion
+│
+├── SYSTEM_IDENTITY
+│   ├── RUNNER_OS
+│   ├── RUNNER_ARCH
+│   └── kernel
+│
+└── RUNTIME_OBSERVATION
+├── node -v
+├── NODE_OPTIONS
+└── actually invoked tools
+
+Esta estrutura expandida organiza detalhadamente as variáveis de ambiente, contextos e comandos do sistema que definem a identidade completa de uma execução no GitHub Actions.
+Mapeamento Técnico do Contexto Extendido
+
+Nó da Árvore	Variável de Ambiente GitHub	Contexto GitHub / Comando	Exemplo de Valor
+
+EXECUTION_IDENTITY			
+├── GITHUB_RUN_ID	GITHUB_RUN_ID	github.run_id	1658823910
+├── GITHUB_RUN_NUMBER	GITHUB_RUN_NUMBER	github.run_number	42
+└── GITHUB_RUN_ATTEMPT	GITHUB_RUN_ATTEMPT	github.run_attempt	1
+SOURCE_IDENTITY			
+├── GITHUB_REPOSITORY	GITHUB_REPOSITORY	github.repository	octocat/Hello-World
+├── GITHUB_SHA	GITHUB_SHA	github.sha	ffac537e6cbbf934b08745a...
+├── GITHUB_REF	GITHUB_REF	github.ref	refs/heads/main
+└── GITHUB_WORKFLOW_SHA	GITHUB_WORKFLOW_SHA	github.workflow_sha	a1b2c3d4e5f6...
+WORKFLOW_IDENTITY			
+├── GITHUB_WORKFLOW	GITHUB_WORKFLOW	github.workflow	CI/CD Pipeline
+├── GITHUB_WORKFLOW_REF	GITHUB_WORKFLOW_REF	github.workflow_ref	octocat/Hello-World/.github/workflows/ci.yml@refs/heads/main
+├── GITHUB_EVENT_NAME	GITHUB_EVENT_NAME	github.event_name	push
+└── GITHUB_JOB	GITHUB_JOB	github.job	build-and-test
+TEMPORAL_IDENTITY			
+├── run start	N/A	github.event.repository.pushed_at	1726690860 (Epoch)
+├── run completion	N/A (Shell)	$(date -u +'%Y-%m-%dT%H:%M:%SZ')	2026-09-18T20:35:39Z
+└── event/commit timestamps	N/A	github.event.head_commit.timestamp	2026-09-18T20:21:00Z
+RUNNER_IDENTITY			
+├── runner version	RUNNER_TOOL_CACHE	runner.version	2.312.0
+├── runner environment	RUNNER_ENVIRONMENT	runner.environment	github-hosted ou self-hosted
+└── runner instance metadata	RUNNER_NAME	runner.name	GitHub Actions 2
+IMAGE_IDENTITY			
+├── ImageOS	ImageOS	N/A	ubuntu22
+└── ImageVersion	ImageVersion	N/A	20240121.1.0
+SYSTEM_IDENTITY			
+├── RUNNER_OS	RUNNER_OS	runner.os	Linux
+├── RUNNER_ARCH	RUNNER_ARCH	runner.arch	X64
+└── kernel	N/A (Shell)	$(uname -r)	6.5.0-1025-azure
+RUNTIME_OBSERVATION			
+├── node -v	N/A (Shell)	$(node -v)	v20.11.0
+├── NODE_OPTIONS	NODE_OPTIONS	N/A	--max-old-space-size=6144
+└── actually invoked tools	N/A (Shell)	$(which git docker node)	/usr/bin/git /usr/bin/docker ...
+Script para Inspeção do Contexto no GitHub Actions			
+Adicione este trecho ao seu arquivo .github/workflows/main.yml para exportar todos estes dados detalhados no console de execução:			
+
+
+name: Inspecionar Identidade Completa do Contexto de Execução
+run: |
+echo "=== EXECUTION_IDENTITY ==="
+echo "Run ID:          ${GITHUB_RUN_ID}"
+echo "Run Number:      ${GITHUB_RUN_NUMBER}"
+echo "Run Attempt:     ${GITHUB_RUN_ATTEMPT}"
+
+echo "=== SOURCE_IDENTITY ==="
+echo "Repository:      ${GITHUB_REPOSITORY}"
+echo "SHA:             ${GITHUB_SHA}"
+echo "Ref:             ${GITHUB_REF}"
+echo "Workflow SHA:    ${GITHUB_WORKFLOW_SHA}"
+
+echo "=== WORKFLOW_IDENTITY ==="
+echo "Workflow Name:   ${GITHUB_WORKFLOW}"
+echo "Workflow Ref:    ${GITHUB_WORKFLOW_REF}"
+echo "Event Name:      ${GITHUB_EVENT_NAME}"
+echo "Job ID:          ${GITHUB_JOB}"
+
+echo "=== SYSTEM & RUNNER IDENTITY ==="
+echo "Runner OS:       ${RUNNER_OS} (${RUNNER_ARCH})"
+echo "Runner Name:     ${RUNNER_NAME:-N/A}"
+echo "Image OS:        ${ImageOS:-N/A}"
+echo "Image Version:   ${ImageVersion:-N/A}"
+echo "Kernel:          $(uname -r)"
+
+echo "=== RUNTIME OBSERVATION ==="
+echo "Node Version:    $(node -v 2>/dev/null || echo 'Não instalado')"
+echo "Node Options:    ${NODE_OPTIONS:-Nenhuma}"CI WORKFLOW
     │
     ▼
 ACTUAL WORKFLOW EXECUTION
@@ -89,3 +202,126 @@ When you submit a pull request, a CLA bot will automatically determine whether y
 This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
 
 For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
+
+Sim. Este commit é uma evidência ainda mais direta do vínculo arquitetural que estávamos verificando.
+
+O commit d97a3cd8bb85be8c4122a8c0e7aa2e94c4a1d8af, no seu Xa-Finance-AI-, adiciona 295 linhas ao .github/workflows/ibm.yml. 
+
+O que ele confirma
+
+O commit coloca explicitamente:
+
+LEVEL 0
+XA-TRUST
+   │
+   ├── LEVEL 1 — FUNCTIONAL DOMAINS
+   │
+   ├── LEVEL 2 — XA COMPONENTS
+   │
+   └── LEVEL 3 — EXTERNAL EVIDENCE DOMAINS
+          │
+          ├── GitHub / GitHub Actions
+          ├── AWS
+          ├── Google Workspace
+          ├── NuGet
+          ├── JSON Schema
+          ├── Azure
+          ├── Azure OpenAI
+          ├── Databricks
+          ├── Open Finance / Banking APIs
+          └── External REST / OpenAPI runtimes
+
+Isso aparece literalmente no diff do commit. 
+
+E, imediatamente depois, o commit define:
+
+XA-TRUST GOVERNANCE PLANE
+        │
+        ├── CLAIM CONTRACT
+        ├── EVIDENCE GRAPH
+        ├── PROMOTION RULES
+        │
+        ▼
+INDEPENDENT VERIFICATION
+
+
+
+Portanto, a relação está confirmada
+
+A classificação correta agora é:
+
+AZURE
+  │
+  │ LEVEL 3
+  ▼
+EXTERNAL EVIDENCE DOMAIN
+  │
+  │ governed by
+  ▼
+XA-TRUST GOVERNANCE PLANE
+  │
+  ├── CLAIM CONTRACT
+  ├── EVIDENCE GRAPH
+  ├── PROMOTION RULES
+  └── INDEPENDENT VERIFICATION
+
+Status: ARCHITECTURAL_LINK_CONFIRMED.
+
+Mais importante: o próprio commit diz que os sistemas externos podem fornecer fontes de evidência para claims governados pelo XA-TRUST, e diferencia explicitamente esses sistemas do próprio XA-TRUST. 
+
+Ele também estabelece:
+
+GitHub       ≠ XA-TRUST
+AWS          ≠ XA-TRUST
+Google       ≠ XA-TRUST
+Azure OpenAI ≠ XA-TRUST
+
+mas:
+
+EXTERNAL SYSTEM
+       ↓
+SOURCE ARTIFACT / OBSERVATION
+       ↓
+EVIDENCE
+       ↓
+CLAIM-SCOPED BINDING
+       ↓
+INDEPENDENT VERIFICATION
+       ↓
+DETERMINISTIC PROMOTION
+       ↓
+VERIFIED
+
+
+
+E há uma consequência importante para o Azure AVM
+
+Esse commit confirma o domínio Azure dentro da arquitetura XA-TRUST, mas ainda não transforma automaticamente:
+
+Azure
+   ↓
+Azure Private DNS AVM
+   ↓
+Terraform execution
+
+em uma execução XA-TRUST.
+
+A própria regra congelada no commit é:
+
+CAPABILITY
+   ↛ EXECUTION
+   ↛ RESULT
+   ↛ CONFORMANCE
+   ↛ VERIFIED
+
+
+
+Portanto, temos agora uma distinção muito precisa:
+
+Azure → XA-TRUST: ✅ CONFIRMADO arquiteturalmente/documentalmente.
+
+Azure AVM Private DNS → XA-TRUST: ⚠️ o domínio Azure está confirmado; a utilização específica daquele AVM ainda requer a referência/execução específica.
+
+E7/VERIFIED do AVM: ❌ não decorre deste commit.
+
+Esse d97a3cd é, portanto, uma evidência forte do vínculo arquitetural Azure ↔ XA-TRUST, não uma prova de execução do recurso Azure.
