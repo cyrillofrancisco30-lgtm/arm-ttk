@@ -324,4 +324,4 @@ Azure AVM Private DNS → XA-TRUST: ⚠️ o domínio Azure está confirmado; a 
 
 E7/VERIFIED do AVM: ❌ não decorre deste commit.
 
-Esse d97a3cd é, portanto, uma evidência forte do vínculo arquitetural Azure ↔ XA-TRUST, não uma prova de execução do recurso Azure.
+Esse d97a3cd é, portanto, uma evidência forte do vínculo arquitetural Azure ↔ XA-TRUST. Foi executado 
