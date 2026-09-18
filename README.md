@@ -1,7 +1,44 @@
-
+CI WORKFLOW
+    │
+    ▼
+ACTUAL WORKFLOW EXECUTION
+    │
+    ▼
+workflow_run.completed
+    │
+    ▼
+E3 — EXECUTION_EVENT_EVIDENCE
+    │
+    ├── repository
+    ├── workflow
+    ├── run_id
+    ├── run_attempt
+    ├── head_sha
+    ├── ref
+    ├── status
+    └── conclusion
+    │
+    ▼
+EVENT ↔ API RUN BINDING
+    │
+    ▼
+E4 — TEST_RESULT_EVIDENCE
+    │
+    ▼
+E5 — CRYPTOGRAPHIC / ARTIFACT BINDING
+    │
+    ▼
+E6 — INDEPENDENT VERIFICATION
+    │
+    ▼
+E7 — CLAIM-SCOPED VERIFICATION
+    │
+    ▼
+PROMOTION DECISION
 # Azure Resource Manager Template Toolkit (arm-ttk)
 
-The code in this repository can be used for analyzing and testing [Azure Resource Manager Templates](https://docs.microsoft.com/azure/templates/).  The tests will check a template or set of templates for coding best practices.  There are some checks for simple syntactical errors but the intent is not to re-implement tests or checks that are provided by the platform (e.g. the /validate api).  
+The code in this repository can be used for analyzing and testing [Azure Resource Manager Templates](https://docs.mu
+icrosoft.com/azure/templates/).  The tests will check a template or set of templates for coding best practices.  There are some checks for simple syntactical errors but the intent is not to re-implement tests or checks that are provided by the platform (e.g. the /validate api).  
 
 >**Note:**
 >Starting  with the 0.10 release, [Bicep](https://github.com/Azure/bicep) now contains all of the deploymentTemplate test cases included in the TTK.  We will begin moving the investment in new tests to the Bicep linter.  The TTK will remain available to support available JSON and createUiDefinition scenarios.
