@@ -41,6 +41,150 @@ EXECUTION_CONTEXT
 ├── NODE_OPTIONS
 └── actually invoked tools
 
+
+Microsoft / ARM-TTK
+        │
+        ├── repository/code
+        │       ↓
+        │   SOURCE_ARTIFACT_EVIDENCE
+        │
+        ├── testcases/*.test.ps1
+        │       ↓
+        │   TEST_DEFINITION
+        │
+        ├── arm-ttk.tests.ps1
+        │       ↓
+        │   EXECUTION_MECHANISM
+        │
+        └── pipeline run
+                ↓
+        EXECUTION_EVENT_EVIDENCE
+
+
+Domínio
+Evidência de origem
+XA-TRUST normalizado
+Binding principal
+Samsung
+DEVICE_STATE
+STATE_EVIDENCE
+device + build + time
+Samsung
+SOFTWARE_STATE
+SOFTWARE_IDENTITY_EVIDENCE
+device + software + version
+Cloudflare
+API_ACTION
+EXECUTION_EVENT_EVIDENCE
+request + operation + resource + time
+Cloudflare
+HTTP_REQUEST
+REQUEST_EXECUTION_EVIDENCE
+request + endpoint + time
+Cloudflare
+AUDIT_EVENT
+AUDIT_EVENT_EVIDENCE
+actor + action + resource + time
+GitHub
+WORKFLOW_RUN
+EXECUTION_EVENT_EVIDENCE
+repository + workflow + run + attempt
+GitHub
+COMMIT
+SOURCE_ARTIFACT_EVIDENCE
+repository + commit SHA
+GitHub
+ARTIFACT
+RESULT_ARTIFACT_EVIDENCE
+run + artifact + digest
+AWS
+IAM
+CONFIGURATION_EVIDENCE
+account + principal + policy + time
+AWS
+CloudTrail
+EXECUTION_EVENT_EVIDENCE
+account + actor + operation + resource + time
+AWS
+EXECUTION
+EXECUTION_RESULT_EVIDENCE
+execution + resource + result
+Google
+ADMIN
+ADMIN_CONFIGURATION_EVIDENCE
+customer + admin + action + time
+Google
+DIRECTORY
+IDENTITY_STATE_EVIDENCE
+customer + object + state
+Google
+API
+API_EXECUTION_EVIDENCE
+request + operation + response + time
+Azure
+PIPELINE
+WORKFLOW_CONFIGURATION_EVIDENCE
+project + pipeline + revision
+Azure
+RESOURCE
+RESOURCE_STATE_EVIDENCE
+subscription + resource + time
+Azure
+EXECUTION
+EXECUTION_EVENT_EVIDENCE
+pipeline + run + attempt + time
+Open Finance
+TRANSACTION
+FINANCIAL_EVENT_EVIDENCE
+transaction + account/context + time
+Open Finance
+CONSENT
+CONSENT_STATE_EVIDENCE
+consent + participant + scope + validity
+Open Finance
+FINANCIAL
+FINANCIAL_STATE_EVIDENCE
+subject + data + temporal scope
+
+
+WORKFLOW_RUN
+     │
+     ├── run_id
+     ├── attempt
+     ├── head_sha
+     │
+     ▼
+TEST EXECUTION
+     │
+     ▼
+RESULT ARTIFACT
+     │
+     └── digest
+
+
+SOURCE EVIDENCE
+      ↓
+NORMALIZATION
+      ↓
+BINDING
+      ↓
+CLAIM-SCOPED EVIDENCE
+      ↓
+INDEPENDENT VERIFICATION
+      ↓
+VERIFIED CLAIM
+
+
+Samsung VERIFIED
+Cloudflare VERIFIED
+GitHub VERIFIED
+AWS VERIFIED
+Google VERIFIED
+Azure VERIFIED
+Open Finance VERIFIED
+
+
+
 Esta estrutura expandida organiza detalhadamente as variáveis de ambiente, contextos e comandos do sistema que definem a identidade completa de uma execução no GitHub Actions.
 Mapeamento Técnico do Contexto Extendido
 
