@@ -188,7 +188,8 @@ Open Finance VERIFIED
 Esta estrutura expandida organiza detalhadamente as variáveis de ambiente, contextos e comandos do sistema que definem a identidade completa de uma execução no GitHub Actions.
 Mapeamento Técnico do Contexto Extendido
 
-Nó da Árvore	Variável de Ambiente GitHub	Contexto GitHub / Comando	Exemplo de Valor
+Nó da Árvore	Variável de Ambiente GitHub	Contexto GitHub / verificsdpo
+
 
 EXECUTION_IDENTITY			
 ├── GITHUB_RUN_ID	GITHUB_RUN_ID	github.run_id	1658823910
