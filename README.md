@@ -52,3 +52,30 @@ When you submit a pull request, a CLA bot will automatically determine whether y
 This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
 
 For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
+
+  "nsg_rules": {
+    "dev8080Rule": {
+      "priority": 100,
+      "direction": "Inbound",
+      "access": "Allow",
+      "protocol": "Tcp",
+      "source_port_range": "*",
+      "destination_port_range": "8080",
+      "source_address_prefix": "*",
+      "destination_address_prefix": "*"
+    },
+    "dev443Rule": {
+      "priority": 200,
+      "direction": "Inbound",
+      "access": "Allow",
+      "protocol": "Tcp",
+      "source_port_range": "*",
+      "destination_port_range": "443",
+      "source_address_prefix": "*",
+      "destination_address_prefix": "*"
+    }
+  },
+  "nsg_name": "entp-ad02-dev-nsg",
+  "resource_group_name": "AKS-RG",
+  "nsg_location": "Australia East"
+}
