@@ -52,3 +52,118 @@ When you submit a pull request, a CLA bot will automatically determine whether y
 This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
 
 For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
+
+                    AZURE DEVOPS
+                  SCHEDULE / MANUAL
+                         │
+                         ▼
+                  CONCRETE RUN
+              ┌──────────────────┐
+              │ RUN_ID            │
+              │ RUN_ATTEMPT       │
+              │ COMMIT_SHA        │
+              │ TIMESTAMPS        │
+              │ RUN STATUS        │
+              │ RUN RESULT        │
+              └────────┬─────────┘
+                       │
+                       ▼
+                 SELF-HOSTED AGENT
+                       │
+                       ▼
+             ┌─────────────────────┐
+             │ AzAPIVersion        │
+             └──────────┬──────────┘
+                        │
+                ┌───────┼───────┐
+                ▼       ▼       ▼
+               DEV     STAGE    PROD
+                │       │       │
+                ▼       ▼       ▼
+           AzurePowerShell@5 × 3
+                │
+                ▼
+       azResourcesApiVersion.ps1
+                │
+        ┌───────┼────────┐
+        ▼       ▼        ▼
+     Int.csv  Stg.csv  Prd.csv
+        │       │        │
+        └───────┼────────┘
+                ▼
+          MERGE / SORT
+                │
+                ▼
+            Output.csv
+                │
+                ▼
+          CopyFiles@2
+                │
+                ▼
+       Pipeline Artifact
+          APIVersion
+                │
+                ▼
+       ┌──────────────────┐
+       │ sendEmail        │
+       └────────┬─────────┘
+                │
+                ▼
+ DownloadPipelineArtifact@2
+                │
+                ▼
+            Output.csv
+                │
+                ▼
+             mailx
+                │
+                ▼
+          destinatários
+
+          E1  SCRIPT / PIPELINE DEFINITION
+          ↓
+E2  CONFIGURATION
+          ↓
+E3  CONCRETE RUN
+    ├── RUN_ID
+    ├── COMMIT_SHA
+    ├── AGENT
+    ├── TASKS
+    ├── TIMESTAMPS
+    └── LOGS
+          ↓
+E4  OBSERVED RESULTS
+    ├── output-Int.csv
+    ├── output-Stg.csv
+    ├── output-Prd.csv
+    └── Output.csv
+          ↓
+E5  BINDING
+    ├── RUN_ID
+    ├── source/script identity
+    ├── input hashes
+    ├── transformation identity
+    └── output hash
+          ↓
+E6  INDEPENDENT RECONSTRUCTION
+          ↓
+E7  CLAIM-SCOPED VERIFIED
+          ↓
+E8  GLOBAL RECONSTRUCTION
+
+RUN_ID
+   │
+   ├──────────► TASK EXECUTION
+   │
+   ├──────────► LOGS
+   │
+   ├──────────► RAW CSVs
+   │
+   └──────────► APIVersion ARTIFACT
+   PIPELINE YAML       ≠ RUN
+RUN                 ≠ RESULT
+RESULT              ≠ VERIFICATION
+E7                  ≠ E8
+
+
+   
