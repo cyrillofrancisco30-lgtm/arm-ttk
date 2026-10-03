@@ -113,7 +113,57 @@ OWNER="cyrillofrancisco30"
 REPO="my-api"
 WF="cyrillofrancisco30-lgtm.yml"
 BRANCH="main"
+POST /dispatches
+       ↓
+HTTP 200
+       ↓
+workflow_run_id REAL
+       ↓
+GET /actions/runs/{EXACT_RUN_ID}
+       ↓
+E3 — EXECUTION IDENTITY
+       ↓
+GET /actions/runs/{RUN_ID}/jobs
+       ↓
+JOB / STEP EXECUTION
+       ↓
+LOGS / ARTIFACTS
+       ↓
+E4 — OBSERVED RESULT
+       ↓
+E5 — BINDING / INTEGRITY
+       ↓
+E6 — INDEPENDENT VERIFICATION
+       ↓
+PROMOTION POLICY
+       ↓
+E7 — CLAIM-SCOPED VERIFIED
 
+
+curl --fail-with-body -L \
+  -H "Accept: application/vnd.github+json" \
+  -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+  -H "X-GitHub-Api-Version: 2026-03-10" \
+  "https://api.github.com/repos/cyrillofrancisco30/my-api/actions/runs/${RUN_ID}/jobs"
+
+DISPATCH
+≠
+EXECUTION
+≠
+RESULT
+≠
+VERIFICATION
+≠
+PROMOTION
+≠
+VERIFIED
+RUN_ID=COLE_O_ID_REAL_AQUI
+
+curl --fail-with-body -L \
+  -H "Accept: application/vnd.github+json" \
+  -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+  -H "X-GitHub-Api-Version: 2026-03-10" \
+  "https://api.github.com/repos/cyrillofrancisco30/my-api/actions/runs/${RUN_ID}"
 : "${GITHUB_TOKEN:?Erro: defina GITHUB_TOKEN antes de executar}"
 
 API="https://api.github.com/repos/${OWNER}/${REPO}/actions/workflows/${WF}/dispatches"
