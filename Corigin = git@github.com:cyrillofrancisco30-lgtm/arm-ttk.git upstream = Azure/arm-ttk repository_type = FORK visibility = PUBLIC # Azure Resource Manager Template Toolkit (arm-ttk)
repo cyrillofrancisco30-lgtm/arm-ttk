@@ -1,12 +1,4 @@
-# Defina o token (somente nesta sessão)
-export GITHUB_TOKEN=ghp_SEU_TOKEN_AQUI   # token com escopos repo + workflow
-
-
-
-```bash
-export GITHUB_TOKEN='SEU_TOKEN_REAL'
-
-curl --fail-with-body -L \
+#!/usr/bin/env bash set -euo pipefail OWNER="cyrillofrancisco30" REPO="my-api" WF="cyrillofrancisco30-lgtm.yml" REF="main" : "${GITHUB_TOKEN:?ERRO: defina GITHUB_TOKEN antes de executar}" API="https://api.github.com/repos/${OWNER}/${REPO}/actions/workflows/${WF}/dispatches" response="$( curl --silent --show-error --fail-with-body \ -L \ -X POST \ -H "Accept: application/vnd.github+json" \ -H "Authorization: Bearer ${GITHUB_TOKEN}" \ -H "X-GitHub-Api-Version: 2026-03-10" \ -H "Content-Type: application/json" \ -d "{\"ref\":\"${REF}\",\"return_run_details\":true}" \ -w $'\n%{http_code}' \ "${API}" )" code="$(printf '%s\n' "$response" | tail -n1)" body="$(printf '%s\n' "$response" | sed '$d')" if [[ "$code" == "200" ]]; then echo "WORKFLOW_DISPATCH = ACCEPTED" echo "$body" if command -v jq >/dev/null 2>&1; then echo echo "WORKFLOW_RUN_ID=$(printf '%s' "$body" | jq -r '.workflow_run_id')" echo "RUN_URL=$(printf '%s' "$body" | jq -r '.run_url')" echo "HTML_URL=$(printf '%s' "$body" | jq -r '.html_url')" fi elif [[ "$code" == "204" ]]; then echo "WORKFLOW_DISPATCH = ACCEPTED" echo "HTTP_STATUS=204" echo "A API aceitou o dispatch, mas não retornou detalhes da execução." else echo "WORKFLOW_DISPATCH = FAILED" echo "HTTP_STATUS=${code}" printf '%s\n' "$body" exit 1 fi # Defina o token 
   -X POST \
   -H "Accept: application/vnd.github+json" \
   -H "Authorization: Bearer ${GITHUB_TOKEN}" \
@@ -81,6 +73,71 @@ curl -X POST \
 
 
 
+chmod +x trigger-workflow.sh
+
+export GITHUB_TOKEN='SEU_TOKEN_REAL'
+
+./trigger-workflow.sh
+
+
+{
+  "workflow_run_id": 123456789,
+  "run_url": "...",
+  "html_url": "..."
+}
+
+
+DISPATCH API RESPONSE
+        ↓
+workflow_run_id = 123456789
+        ↓
+EXACT RUN RESOLUTION
+
+
+
+DISPATCH
+  ≠
+RUN COMPLETED
+  ≠
+TEST RESULT
+  ≠
+TEST PASSED
+  ≠
+VERIFICATION RESULT
+  ≠
+CLAIM-SCOPED VERIFIED
+
+
+
+POST /dispatches
+        ↓
+HTTP RESPONSE
+        ↓
+workflow_run_id
+        ↓
+GET /actions/runs/{workflow_run_id}
+        ↓
+RUN_IDENTITY VALIDATION
+        ↓
+GET /actions/runs/{run_id}/jobs
+        ↓
+JOB / STEP EXECUTION
+        ↓
+LOGS / ARTIFACTS
+        ↓
+E4 — OBSERVED RESULT
+        ↓
+E5 — BINDING / INTEGRITY
+        ↓
+E6 — INDEPENDENT VERIFICATION
+        ↓
+PROMOTION POLICY
+        ↓
+E7 — CLAIM-SCOPED VERIFIED
+
+
+
+
 # Salve o script abaixo como trigger-workflow.sh
 #!/usr/bin/env bash
 OWNER="cyrillofrancisco30"
@@ -88,11 +145,7 @@ REPO="my-api"
 WF="cyrillofrancisco30-lgtm.yml"
 BRANCH="main"
 
-if [[ -z "$GITHUB_TOKEN" ]]; then
-  echo "Erro: exporte GITHUB_TOKEN antes de usar."
-  exit 1
-fi
-
+commit 
 API="https://api.github.com/repos/${OWNER}/${REPO}/actions/workflows/${WF}/dispatches"
 
 resp=$(curl -s -w "\n%{http_code}" -X POST \
