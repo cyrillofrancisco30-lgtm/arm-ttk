@@ -1,7 +1,78 @@
 # Defina o token (somente nesta sessão)
 export GITHUB_TOKEN=ghp_SEU_TOKEN_AQUI   # token com escopos repo + workflow
 
-# Dispara o workflow na branch main
+
+
+```bash
+export GITHUB_TOKEN='SEU_TOKEN_REAL'
+
+curl --fail-with-body -L \
+  -X POST \
+  -H "Accept: application/vnd.github+json" \
+  -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+  -H "X-GitHub-Api-Version: 2022-11-28" \
+  https://api.github.com/repos/cyrillofrancisco30/my-api/actions/workflows/cyrillofrancisco30-lgtm.yml/dispatches \
+  -d '{"ref":"main"}'
+```
+
+O token precisa ter acesso ao repositório e permissão **Actions: Read and write**; tokens clássicos normalmente precisam do escopo `repo`. O workflow também deve conter o gatilho `workflow_dispatch`. <citation src="1"></citation>
+
+### Script Bash corrigido
+
+Seu script verifica apenas `201` e `202`, mas o endpoint normalmente retorna `204`; em versões recentes também pode retornar `200` se forem solicitados detalhes da execução. <citation src="1,5"></citation>
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+OWNER="cyrillofrancisco30"
+REPO="my-api"
+WF="cyrillofrancisco30-lgtm.yml"
+BRANCH="main"
+
+: "${GITHUB_TOKEN:?Erro: defina GITHUB_TOKEN antes de executar}"
+
+API="https://api.github.com/repos/${OWNER}/${REPO}/actions/workflows/${WF}/dispatches"
+
+response=$(curl --silent --show-error --fail-with-body \
+  -w $'\n%{http_code}' \
+  -X POST \
+  -H "Accept: application/vnd.github+json" \
+  -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+  -H "X-GitHub-Api-Version: 2022-11-28" \
+  -H "Content-Type: application/json" \
+  -d "{\"ref\":\"${BRANCH}\"}" \
+  "$API")
+
+code="${response##*$'\n'}"
+body="${response%$'\n'*}"
+
+if [[ "$code" == "200" || "$code" == "204" ]]; then
+  echo "✅ Workflow disparado com sucesso (HTTP $code)"
+  [[ -n "$body" ]] && echo "$body"
+else
+  echo "❌ Falha (HTTP $code)"
+  echo "$body"
+  exit 1
+fi
+```
+
+Depois:
+
+```bash
+chmod +x trigger-workflow.sh
+export GITHUB_TOKEN='SEU_TOKEN_REAL'
+./trigger-workflow.sh
+```
+
+No arquivo YAML do workflow que será disparado, confirme que existe:
+
+```yaml
+on:
+  workflow_dispatch:
+```
+
+O bloco `workflow_run` que você incluiu serve para disparar outro workflow após a conclusão de `Build & Test`; ele não substitui `workflow_dispatch` para o disparo manual pela API. Dispara o workflow na branch main
 curl -X POST \
   -H "Accept: application/vnd.github+json" \
   -H "Authorization: token $GITHUB_TOKEN" \
