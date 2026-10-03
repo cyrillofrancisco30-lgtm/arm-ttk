@@ -1,3 +1,47 @@
+export GITHUB_TOKEN='SEU_TOKEN_REAL'
+
+curl --fail-with-body -L \
+  -X POST \
+  -H "Accept: application/vnd.github+json" \
+  -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+  -H "X-GitHub-Api-Version: 2026-03-10" \
+  -H "Content-Type: application/json" \
+  https://api.github.com/repos/cyrillofrancisco30/my-api/actions/workflows/cyrillofrancisco30-lgtm.yml/dispatches \
+  -d '{"ref":"main","return_run_details":true}'
+
+
+on:
+  workflow_dispatch:
+
+
+
+{
+  "workflow_run_id": 123456789,
+  "run_url": "https://api.github.com/repos/cyrillofrancisco30/my-api/actions/runs/123456789",
+  "html_url": "https://github.com/cyrillofrancisco30/my-api/actions/runs/123456789"
+}
+
+
+POST /dispatches
+        ↓
+HTTP 200
+        ↓
+workflow_run_id = 123456789
+        ↓
+EXACT RUN IDENTITY
+
+
+RUN_ID=123456789
+
+curl --fail-with-body -L \
+  -H "Accept: application/vnd.github+json" \
+  -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+  -H "X-GitHub-Api-Version: 2026-03-10" \
+  "https://api.github.com/repos/cyrillofrancisco30/my-api/actions/runs/${RUN_ID}"
+
+
+
+
 #!/usr/bin/env bash set -euo pipefail OWNER="cyrillofrancisco30" REPO="my-api" WF="cyrillofrancisco30-lgtm.yml" REF="main" : "${GITHUB_TOKEN:?ERRO: defina GITHUB_TOKEN antes de executar}" API="https://api.github.com/repos/${OWNER}/${REPO}/actions/workflows/${WF}/dispatches" response="$( curl --silent --show-error --fail-with-body \ -L \ -X POST \ -H "Accept: application/vnd.github+json" \ -H "Authorization: Bearer ${GITHUB_TOKEN}" \ -H "X-GitHub-Api-Version: 2026-03-10" \ -H "Content-Type: application/json" \ -d "{\"ref\":\"${REF}\",\"return_run_details\":true}" \ -w $'\n%{http_code}' \ "${API}" )" code="$(printf '%s\n' "$response" | tail -n1)" body="$(printf '%s\n' "$response" | sed '$d')" if [[ "$code" == "200" ]]; then echo "WORKFLOW_DISPATCH = ACCEPTED" echo "$body" if command -v jq >/dev/null 2>&1; then echo echo "WORKFLOW_RUN_ID=$(printf '%s' "$body" | jq -r '.workflow_run_id')" echo "RUN_URL=$(printf '%s' "$body" | jq -r '.run_url')" echo "HTML_URL=$(printf '%s' "$body" | jq -r '.html_url')" fi elif [[ "$code" == "204" ]]; then echo "WORKFLOW_DISPATCH = ACCEPTED" echo "HTTP_STATUS=204" echo "A API aceitou o dispatch, mas não retornou detalhes da execução." else echo "WORKFLOW_DISPATCH = FAILED" echo "HTTP_STATUS=${code}" printf '%s\n' "$body" exit 1 fi # Defina o token 
   -X POST \
   -H "Accept: application/vnd.github+json" \
@@ -6,6 +50,44 @@
   https://api.github.com/repos/cyrillofrancisco30/my-api/actions/workflows/cyrillofrancisco30-lgtm.yml/dispatches \
   -d '{"ref":"main"}'
 ```
+DISPATCH REQUEST
+      ↓
+DISPATCH API RESPONSE
+      ↓
+workflow_run_id
+      ↓
+GET /actions/runs/{EXACT_RUN_ID}
+      ↓
+RUN_IDENTITY VALIDATION
+      ↓
+GET /actions/runs/{RUN_ID}/jobs
+      ↓
+JOB / STEP EXECUTION
+      ↓
+LOGS / ARTIFACTS
+      ↓
+E4 — OBSERVED RESULT
+      ↓
+E5 — BINDING / INTEGRITY
+      ↓
+E6 — INDEPENDENT VERIFICATION
+      ↓
+PROMOTION POLICY
+      ↓
+E7 — CLAIM-SCOPED VERIFIED
+
+DISPATCH
+≠
+EXECUTION
+≠
+RESULT
+≠
+VERIFICATION
+≠
+PROMOTION
+≠
+VERIFIED
+
 
 O token precisa ter acesso ao repositório e permissão **Actions: Read and write**; tokens clássicos normalmente precisam do escopo `repo`. O workflow também deve conter o gatilho `workflow_dispatch`. <citation src="1"></citation>
 
