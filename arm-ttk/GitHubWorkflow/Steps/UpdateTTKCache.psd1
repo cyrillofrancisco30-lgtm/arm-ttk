@@ -1,5 +1,117 @@
 
 
+Eu congelaria a regra como:
+
+XA-TRUST — DUAL-PROOF PROMOTION INVARIANT
+
+REGULATORY_PROOF
+    = ∧(P1...P7)
+
+OPERATIONAL_PROOF
+    = ∧(O1...O7)
+
+BANKING_LICENSE_VERIFIED
+    ⇔
+    REGULATORY_PROOF ∧ OPERATIONAL_PROOF
+
+Portanto:
+
+OPERATIONAL_PROOF
+    ↛ BANKING_LICENSE_VERIFIED
+
+REGULATORY_PROOF
+    ↛ BANKING_LICENSE_VERIFIED
+
+e:
+
+PROMOTION_ALLOWED
+    ⇔
+    REGULATORY_PROOF ∧ OPERATIONAL_PROOF
+
+A forma de falha:
+
+PROMOTION_BLOCKED
+    ⇔
+    ¬REGULATORY_PROOF ∨ ¬OPERATIONAL_PROOF
+
+ou, completamente expandida:
+
+PROMOTION_BLOCKED
+⇔
+(¬P1 ∨ ¬P2 ∨ ¬P3 ∨ ¬P4 ∨ ¬P5 ∨ ¬P6 ∨ ¬P7)
+∨
+(¬O1 ∨ ¬O2 ∨ ¬O3 ∨ ¬O4 ∨ ¬O5 ∨ ¬O6 ∨ ¬O7)
+
+Invariante central
+
+BANKING_LICENSE_VERIFIED
+                              ▲
+                              │
+                         STRICT AND
+                              │
+              ┌───────────────┴───────────────┐
+              │                               │
+      REGULATORY_PROOF                 OPERATIONAL_PROOF
+        P1 ∧ ... ∧ P7                    O1 ∧ ... ∧ O7
+
+Isso produz quatro estados possíveis, dos quais somente um permite promoção:
+
+REGULATORY
+                   F       T
+                ┌───────────────┐
+OPERATIONAL F   │ BLOCKED│BLOCKED│
+                ├───────────────┤
+           T    │ BLOCKED│ ALLOW │
+                └───────────────┘
+
+E a consequência epistemológica é importante:
+
+EVIDENCE_RETAINED
+        ≠
+PROMOTION_ALLOWED
+
+Quando um Pi ou Oj falha, a evidência não precisa ser destruída nem tratada como inexistente. O sistema registra qual componente da prova não satisfez o contrato:
+
+FAILED_REGULATORY_PREDICATES = { Pi ... }
+FAILED_OPERATIONAL_PREDICATES = { Oj ... }
+
+PROMOTION_STATUS = PROMOTION_BLOCKED
+EVIDENCE_STATUS  = RETAINED
+
+Assim, o XA-TRUST não transforma:
+
+EXECUÇÃO BEM-SUCEDIDA
+        ↓
+AUTORIZAÇÃO REGULATÓRIA
+
+nem:
+
+REGISTRO REGULATÓRIO VÁLIDO
+        ↓
+EXECUÇÃO VERIFICADA
+
+em uma inferência automática.
+
+A única promoção válida é:
+
+REGULATORY_PROOF
+        ∧
+OPERATIONAL_PROOF
+        ↓
+STRICT PROMOTION GATE
+        ↓
+CLAIM-SCOPED BANKING_LICENSE_VERIFIED
+
+Isso também preserva a distinção maior:
+
+CLAIM-SCOPED VERIFIED
+        ≠
+GLOBAL REGULATORY FACT
+
+Ou seja, mesmo depois do Gate local, qualquer afirmação global continua sujeita à camada independente de população, cobertura, completude, agregação e decisão de promoção global.
+
+
+
 Consultei novamente o repositório cyrillofrancisco30-lgtm/arm-ttk. A API retornou:
 
 {
@@ -220,4 +332,217 @@ APPLICABLE CLAIM CONTRACT
 DETERMINISTIC VERIFICATION
     +
 TRUST 
-EVIDENCE Execution Verification 
+EVIDENCE Execution Verification
+
+
+
+Sim. Essa árvore é uma boa definição de EXECUTION_CONTEXT, mas eu faria uma separação normativa importante: EXECUTION_CONTEXT não é ainda E3_VERIFIED. Ele é o conjunto de atributos que permite construir e posteriormente validar a identidade da execução.
+
+A forma consolidada fica:
+
+FROZEN — XA-TRUST EXECUTION CONTEXT MODEL
+
+EXECUTION_CONTEXT
+│
+├── EXECUTION_IDENTITY
+│   ├── GITHUB_RUN_ID
+│   ├── GITHUB_RUN_NUMBER
+│   └── GITHUB_RUN_ATTEMPT
+│
+├── SOURCE_IDENTITY
+│   ├── GITHUB_REPOSITORY
+│   ├── GITHUB_SHA
+│   ├── GITHUB_REF
+│   └── GITHUB_WORKFLOW_SHA
+│
+├── WORKFLOW_IDENTITY
+│   ├── GITHUB_WORKFLOW
+│   ├── GITHUB_WORKFLOW_REF
+│   ├── GITHUB_EVENT_NAME
+│   └── GITHUB_JOB
+│
+├── TEMPORAL_IDENTITY
+│   ├── RUN_STARTED_AT
+│   ├── RUN_COMPLETED_AT
+│   └── EVENT / COMMIT TIMESTAMPS
+│
+├── RUNNER_IDENTITY
+│   ├── RUNNER_VERSION
+│   ├── RUNNER_ENVIRONMENT
+│   └── RUNNER_INSTANCE_METADATA
+│
+├── IMAGE_IDENTITY
+│   ├── ImageOS
+│   └── ImageVersion
+│
+├── SYSTEM_IDENTITY
+│   ├── RUNNER_OS
+│   ├── RUNNER_ARCH
+│   └── KERNEL
+│
+└── RUNTIME_OBSERVATION
+    ├── NODE_VERSION
+    ├── NODE_OPTIONS
+    └── ACTUALLY_INVOKED_TOOLS
+
+A fronteira fundamental
+
+EXECUTION_CONTEXT_PRESENT
+        │
+        ▼
+IDENTITY CONSISTENCY CHECK
+        │
+   ┌────┴────┐
+   │         │
+ PASS    INCONSISTENT
+   │         │
+   ▼         ▼
+E3        PROMOTION
+ELIGIBLE    BLOCKED
+   │         │
+   ▼         └──► EVIDENCE RETAINED
+JOB / STEP EXECUTION
+   │
+   ▼
+OBSERVED LOGS
+   │
+   ▼
+E4 — RESULT EVIDENCE
+
+Ou seja:
+
+EXECUTION_CONTEXT
+        ≠
+CONCRETE EXECUTION
+        ≠
+OBSERVED RESULT
+        ≠
+E7 VERIFIED
+
+O que cada bloco realmente prova
+
+Bloco	O que pode estabelecer
+
+EXECUTION_IDENTITY	identificadores candidatos da execução
+SOURCE_IDENTITY	repositório/ref/SHA associados ao contexto
+WORKFLOW_IDENTITY	workflow, workflow ref, evento e job
+TEMPORAL_IDENTITY	contexto temporal observado
+RUNNER_IDENTITY	identidade/contexto do runner
+IMAGE_IDENTITY	imagem/versionamento do ambiente
+SYSTEM_IDENTITY	OS, arquitetura e kernel observados
+RUNTIME_OBSERVATION	versões/comandos efetivamente observados, quando registrados
+
+
+A última categoria merece atenção especial:
+
+NODE_VERSION = observado
+
+é diferente de:
+
+NODE_AVAILABLE = true
+
+e muito diferente de:
+
+NODE_COMMAND_EXECUTED = true
+
+e ainda diferente de:
+
+NODE_COMMAND_RESULT = PASS
+
+Da mesma forma:
+
+IMAGE_IDENTITY
+        ≠
+SOFTWARE_EXECUTION
+        ≠
+SOFTWARE_RESULT
+
+Relação com E3
+
+Eu definiria:
+
+E3 — EXECUTION IDENTITY EVIDENCE
+
+E3 =
+    EXECUTION_IDENTITY
+ ∧  SOURCE_IDENTITY
+ ∧  WORKFLOW_IDENTITY
+ ∧  TEMPORAL_IDENTITY
+ ∧  IDENTITY_CONSISTENCY
+ ∧  AUTHORITATIVE_RUN_CORRELATION
+
+Quando aplicável:
+
+workflow_run.completed
+        │
+        ▼
+event.workflow_run.id
+        │
+        ▼
+GET /actions/runs/{id}
+        │
+        ▼
+eventRun.id == apiRun.id
+        │
+        ▼
+RUN_IDENTITY_BOUND
+
+Isso é muito mais forte do que simplesmente encontrar GITHUB_RUN_ID em um log.
+
+E o restante da cadeia
+
+WORKFLOW_DEFINITION
+        │
+        ▼
+EXECUTION_CONTEXT
+        │
+        ▼
+IDENTITY CONSISTENCY
+        │
+        ▼
+E3 — EXECUTION IDENTITY
+        │
+        ▼
+JOB / STEP EXECUTION
+        │
+        ▼
+OBSERVED LOGS
+        │
+        ▼
+E4 — RESULT EVIDENCE
+        │
+        ▼
+E5 — BINDING / INTEGRITY
+        │
+        ▼
+E6 — INDEPENDENT VERIFICATION
+        │
+        ▼
+APPLICABLE PROMOTION POLICY
+        │
+        ▼
+E7 — CLAIM-SCOPED VERIFIED
+
+E a Golden Rule permanece intacta:
+
+IDENTITY ≠ INTEGRITY ≠ SEMANTIC TRUTH
+
+E, sobretudo:
+
+EXECUTION_CONTEXT_PRESENT
+    ≠
+EXECUTION_IDENTITY_VERIFIED
+
+EXECUTION_IDENTITY_VERIFIED
+    ≠
+RESULT_VERIFIED
+
+RESULT_VERIFIED
+    ≠
+CLAIM-SCOPED VERIFIED
+
+Portanto, a árvore que você apresentou pode ser congelada como modelo de identidade/contexto de execução. A promoção para E3 ocorre somente depois das validações de consistência e correlação; E7 continua condicionado conjuntamente a E3 ∧ E4 ∧ E5 ∧ E6 ∧ POLICY. 
+
+
+
+disparar  WORKFLOW 
