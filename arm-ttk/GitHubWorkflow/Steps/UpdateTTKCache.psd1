@@ -1,3 +1,62 @@
+
+
+Consultei novamente o repositório cyrillofrancisco30-lgtm/arm-ttk. A API retornou:
+
+{
+  "total_count": 0,
+  "workflow_runs": []
+}
+
+
+
+1. Dispare pelo GitHub CLI
+
+No terminal em que você está autenticado no GitHub, execute:
+
+gh workflow list \
+  --repo cyrillofrancisco30-lgtm/arm-ttk
+
+Confirme que run-unit-tests.yml aparece na lista. Depois, se o workflow aceitar workflow_dispatch:
+
+gh workflow run run-unit-tests.yml \
+  --repo cyrillofrancisco30-lgtm/arm-ttk \
+  --ref master
+
+Consulte as execuções:
+
+gh run list \
+  --repo cyrillofrancisco30-lgtm/arm-ttk \
+  --workflow run-unit-tests.yml \
+  --limit 5
+
+Se houver uma nova execução, copie o ID numérico real e consulte-a:
+
+gh run view ID_REAL \
+  --repo cyrillofrancisco30-lgtm/arm-ttk \
+  --json databaseId,status,conclusion,headSha,attempt,jobs
+
+2. Sobre o trecho Checkout TTK
+
+O trecho que você enviou declara o uso de actions/checkout@v2 para obter Azure/arm-ttk no diretório ttk.
+
+Isso é configuração declarativa. Isoladamente, não prova que o checkout aconteceu nem que os testes foram executados.
+
+3. Sobre a decisão de custódia
+
+O resultado apresentado continua indicando:
+
+{
+  
+  "reasons": ["SETTLEMENT_ROUTE_NOT_VERIFIED"],
+  "settlement_route_verified": null,
+  "bank_transaction_performed": false,
+  "ledger_persisted": false
+}
+
+Esse resultado é compatível com uma decisão de revisão por falta de comprovação da rota de liquidação. demonstra uma transação bancária  persistência no ledger; 
+
+
+
 gh workflow run run-unit-tests.yml \
 --repo cyrillofrancisco30-lgtm/arm-ttk \
 --ref master
@@ -160,8 +219,5 @@ APPLICABLE CLAIM CONTRACT
     +
 DETERMINISTIC VERIFICATION
     +
-TRUST POLICY
-
-NO AUTOMATIC STATE PROMOTION.
-NO GLOBAL STATE INHERITANCE.
-NO IMPLICIT TRUST PROPAGATION.
+TRUST 
+EVIDENCE Execution Verification 
