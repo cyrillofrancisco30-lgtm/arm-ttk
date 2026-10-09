@@ -1,3 +1,48 @@
+gh workflow run run-unit-tests.yml \
+--repo cyrillofrancisco30-lgtm/arm-ttk \
+--ref master
+
+gh run list \
+--repo cyrillofrancisco30-lgtm/arm-ttk \
+--workflow run-unit-tests.yml \
+--limit 5
+
+gh run view RUN_ID \
+--repo cyrillofrancisco30-lgtm/arm-ttk \
+--json databaseId,status,conclusion,headSha,attempt,jobs
+
+result = verify_custody_with_bcb_policy(
+    artifact_id="BCB-PIX-PARTICIPANTS-2026-08-24",
+    counterparty_ispb="60746948",
+    source_csv_path=CSV_PATH,
+    expected_sha256=TRUSTED_REFERENCE_SHA256,
+    policy_version="GT7-POLICY-2026-08-24-v1",
+    bcb_dataframe=df,
+    execution_id="EXEC-2026-10-09-001",
+    settlement_route_verified=None,
+)
+
+{
+  "decision": "REVIEW",
+  "reasons": [
+    "SETTLEMENT_ROUTE_NOT_VERIFIED"
+  ],
+  "settlement_route_verified": null,
+  "bank_transaction_performed": false,
+  "ledger_persisted": false
+}9
+
+
+
+if settlement_route_verified is not True:
+    return {
+        "decision": "REVIEW",
+        "reasons": ["SETTLEMENT_ROUTE_NOT_VERIFIED"],
+        "settlement_route_verified": None,
+        "bank_transaction_performed": False,
+        "ledger_persisted": False,
+    }
+
 Código → Commit → Build → Provenance → Artefato → Runtime → Modelo → Decisão
 ↓                                                    ↓
 DEP (Decision Evidence Package) → Ledger → Replay → TRUST_STATUS = VERIFIED
