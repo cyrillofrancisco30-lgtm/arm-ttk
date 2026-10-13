@@ -1,3 +1,25 @@
+# XA-TRUST — Pacote público de evidências
+
+Este diretório ancora metadados e registros de coleta de execuções do GitHub Actions.
+
+## Artefatos gerados
+
+- `E3_workflow_run.json`: resposta da API para o run ID exato.
+- `E4_jobs.json`: resposta da API de jobs associada ao mesmo run.
+- `E5_execution_logs.log`: registro da coleta e SHA-256 do arquivo ZIP de logs. O ZIP original é publicado como artefato do workflow por 14 dias, não como texto bruto neste repositório.
+- `E6_manifest.sha256`: hashes SHA-256 dos arquivos de evidência commitados.
+- `E7_evaluation_report.md`: avaliação claim-scoped, inicialmente não promovida até revisão independente.
+
+## Disparar manualmente
+
+No GitHub, abra **Actions → XA-TRUST Evidence Capture → Run workflow** e informe o ID numérico exato da execução a coletar. O workflow também tenta coletar automaticamente quando o workflow `RunPester` termina.
+
+## Limites
+
+Uma execução concluída não implica que os testes passaram. Um hash não comprova verdade semântica. E7 só pode ser promovido após verificação independente e aplicação explícita da política P. Evidência local não implica estado global verificado.
+
+**Privacidade:** antes de disponibilizar logs publicamente, verifique se não contêm tokens, segredos, dados pessoais ou conteúdo confidencial. O artefato de logs é acessível a quem tem acesso ao repositório durante o período de retenção.
+
 FROZEN — GITHUB WORKFLOW EXECUTION EVIDENCE
 
 "workflow_run" with "types: [completed]" constitutes a valid GitHub Actions mechanism for observing the completion event of another workflow.
@@ -876,6 +898,7 @@ CI termina
   → assinatura
   → upload do bundle
 ```
+
 
 Em `schedule`, como não existe `workflow_run.id`, o coletor continua usando a execução concluída mais recente como fallback.
 
