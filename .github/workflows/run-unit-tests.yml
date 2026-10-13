@@ -20,6 +20,62 @@ Uma execução concluída não implica que os testes passaram. Um hash não comp
 
 **Privacidade:** antes de disponibilizar logs publicamente, verifique se não contêm tokens, segredos, dados pessoais ou conteúdo confidencial. O artefato de logs é acessível a quem tem acesso ao repositório durante o período de retenção.
 
+registro canônico
+  → hash e prova Merkle
+  → VERIFIED
+  → assinatura
+
+registro canônico
+  → hashes e binding
+  → verificação independente
+  → resultado E7 do claim
+  → política P
+  → decisão de promoção
+  → assinatura do bundle final
+  → verificação da assinatura publicada
+
+
+const eventName = process.env.EVIDENCE_EVENT_NAME;
+
+if (
+  eventName !== "workflow_run" &&
+  eventName !== "workflow_dispatch" &&
+  eventName !== "schedule"
+) {
+  throw new Error("UNSUPPORTED_EVIDENCE_TRIGGER");
+}
+
+const event = JSON.parse(
+  readFileSync(process.env.GITHUB_EVENT_PATH!, "utf8")
+);
+
+const eventRunId =
+  eventName === "workflow_run"
+    ? Number(event.workflow_run?.id)
+    : undefined;
+
+const explicitRunId =
+  process.env.EVIDENCE_WORKFLOW_RUN_ID?.trim() || undefined;
+
+const runId = await resolveWorkflowRunId(
+  github,
+  owner,
+  repo,
+  expectedWorkflow,
+  eventName,
+  eventRunId,
+  explicitRunId
+);
+
+const run = await getWorkflowRun(
+  github,
+  owner,
+  repo,
+  runId
+);
+
+
+
 FROZEN — GITHUB WORKFLOW EXECUTION EVIDENCE
 
 "workflow_run" with "types: [completed]" constitutes a valid GitHub Actions mechanism for observing the completion event of another workflow.
