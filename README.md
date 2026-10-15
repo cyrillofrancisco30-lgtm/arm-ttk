@@ -1,4 +1,175 @@
 
+name: XA-TRUST - ARM-TTK Validation
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: xa-arm-ttk-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  arm-ttk-tests:
+    name: ARM-TTK Unit Tests
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Record execution context
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+
+          New-Item -ItemType Directory `
+            -Path evidence -Force | Out-Null
+
+          @{
+            schema_version = "1.0.0"
+            evidence_scope = "ARM_TTK_UNIT_TESTS"
+            repository = "${{ github.repository }}"
+            commit_sha = "${{ github.sha }}"
+            ref = "${{ github.ref }}"
+            run_id = "${{ github.run_id }}"
+            run_attempt = "${{ github.run_attempt }}"
+            workflow = "${{ github.workflow }}"
+            runner_os = [System.Runtime.InteropServices.RuntimeInformation]::OSDescription
+            powershell_version = $PSVersionTable.PSVersion.ToString()
+            started_at_utc = [DateTime]::UtcNow.ToString("o")
+          } | ConvertTo-Json -Depth 5 |
+            Set-Content evidence/execution-context.json -Encoding utf8
+
+      - name: Verify ARM-TTK paths
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+
+          $module = Join-Path $env:GITHUB_WORKSPACE `
+            "arm-ttk/arm-ttk/arm-ttk.psd1"
+
+          $tests = Join-Path $env:GITHUB_WORKSPACE `
+            "arm-ttk/unit-tests/arm-ttk.tests.ps1"
+
+          if (!(Test-Path $module)) {
+            throw "ARM-TTK module not found: $module"
+          }
+
+          if (!(Test-Path $tests)) {
+            throw "ARM-TTK test script not found: $tests"
+          }
+
+      - name: Run ARM-TTK unit tests
+        id: tests
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          $ErrorActionPreference = "Stop"
+
+          $testDir = Join-Path $env:GITHUB_WORKSPACE `
+            "arm-ttk/unit-tests"
+
+          $module = Join-Path $env:GITHUB_WORKSPACE `
+            "arm-ttk/arm-ttk/arm-ttk.psd1"
+
+          $log = Join-Path $env:GITHUB_WORKSPACE `
+            "evidence/arm-ttk-tests.log"
+
+          $global:LASTEXITCODE = 0
+          $testExitCode = 0
+
+          try {
+            Set-Location $testDir
+
+            Import-Module $module -Force -ErrorAction Stop
+
+            Start-Transcript -Path $log -Force
+
+            try {
+              .\arm-ttk.tests.ps1
+              if ($LASTEXITCODE -ne 0) {
+                $testExitCode = $LASTEXITCODE
+              }
+            }
+            catch {
+              $_ | Out-String | Add-Content $log
+              $testExitCode = 1
+            }
+            finally {
+              Stop-Transcript
+            }
+          }
+          catch {
+            $_ | Out-String | Add-Content $log
+            $testExitCode = 1
+          }
+
+          @{
+            test_scope = "ARM_TTK_UNIT_TESTS"
+            exit_code = $testExitCode
+            outcome = if ($testExitCode -eq 0) {
+              "PASS"
+            } else {
+              "FAIL"
+            }
+            completed_at_utc = [DateTime]::UtcNow.ToString("o")
+          } | ConvertTo-Json |
+            Set-Content evidence/test-result.json -Encoding utf8
+
+          "exit_code=$testExitCode" |
+            Add-Content $env:GITHUB_OUTPUT
+
+      - name: Generate evidence manifest
+        if: always()
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+
+          $root = Join-Path $env:GITHUB_WORKSPACE "evidence"
+          New-Item -ItemType Directory -Path $root -Force |
+            Out-Null
+
+          $manifest = Get-ChildItem $root -File |
+            Where-Object { $_.Name -ne "sha256-manifest.txt" } |
+            Sort-Object Name |
+            ForEach-Object {
+              $hash = Get-FileHash $_.FullName -Algorithm SHA256
+              "$($hash.Hash.ToLowerInvariant())  $($_.Name)"
+            }
+
+          $manifest |
+            Set-Content (Join-Path $root "sha256-manifest.txt") `
+              -Encoding utf8
+
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: xa-arm-ttk-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: evidence/
+          if-no-files-found: warn
+          retention-days: 90
+
+      - name: Enforce test result
+        if: always()
+        shell: pwsh
+        env:
+          TEST_EXIT_CODE: ${{ steps.tests.outputs.exit_code }}
+        run: |
+          if ($TEST_EXIT_CODE -ne "0") {
+            throw "ARM-TTK validation failed or did not complete successfully."
+          }
+
+
+
 # Azure Resource Manager Template Toolkit (arm-ttk)
 
 The code in this repository can be used for analyzing and testing [Azure Resource Manager Templates](https://docs.microsoft.com/azure/templates/).  The tests will check a template or set of templates for coding best practices.  There are some checks for simple syntactical errors but the intent is not to re-implement tests or checks that are provided by the platform (e.g. the /validate api).  
