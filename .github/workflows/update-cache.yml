@@ -1,3 +1,192 @@
+name: XA-TRUST - ARM-TTK Validation
+
+on:
+push:
+workflow_dispatch:
+
+permissions:
+contents: read
+
+concurrency:
+group: xa-trust-arm-ttk-${{ github.ref }}
+cancel-in-progress: false
+
+jobs:
+arm-ttk-tests:
+name: ARM-TTK Unit Tests and Evidence
+runs-on: ubuntu-latest
+
+env:
+  PESTER_MAX_VERSION: "4.99.99"
+  MODULE_PATH: "./arm-ttk/arm-ttk.psd1"
+
+steps:
+  - name: Checkout source
+    uses: actions/checkout@v4
+    with:
+      persist-credentials: false
+
+  - name: Record execution context
+    shell: pwsh
+    env:
+      REPOSITORY: ${{ github.repository }}
+      COMMIT_SHA: ${{ github.sha }}
+      REF_NAME: ${{ github.ref }}
+      RUN_ID: ${{ github.run_id }}
+      RUN_ATTEMPT: ${{ github.run_attempt }}
+      WORKFLOW_NAME: ${{ github.workflow }}
+      EVENT_NAME: ${{ github.event_name }}
+    run: |
+      $ErrorActionPreference = "Stop"
+      New-Item -ItemType Directory -Path evidence -Force |
+        Out-Null
+
+      @{
+        schema_version = "1.0.0"
+        evidence_scope = "ARM_TTK_UNIT_TESTS"
+        repository = $env:REPOSITORY
+        commit_sha = $env:COMMIT_SHA
+        ref = $env:REF_NAME
+        run_id = $env:RUN_ID
+        run_attempt = $env:RUN_ATTEMPT
+        workflow = $env:WORKFLOW_NAME
+        event_name = $env:EVENT_NAME
+        runner_os = $env:RUNNER_OS
+        powershell_version = $PSVersionTable.PSVersion.ToString()
+        recorded_at_utc = [DateTime]::UtcNow.ToString("o")
+      } | ConvertTo-Json -Depth 5 |
+        Set-Content evidence/execution-context.json -Encoding utf8
+
+  - name: Verify required files
+    shell: pwsh
+    run: |
+      $ErrorActionPreference = "Stop"
+
+      $module = Join-Path $env:GITHUB_WORKSPACE $env:MODULE_PATH
+      $installer = Join-Path $env:GITHUB_WORKSPACE `
+        "arm-ttk/GitHubWorkflow/Steps/InstallPester.ps1"
+      $runner = Join-Path $env:GITHUB_WORKSPACE `
+        "arm-ttk/GitHubWorkflow/Steps/RunPester.ps1"
+
+      foreach ($path in @($module, $installer, $runner)) {
+        if (-not (Test-Path $path -PathType Leaf)) {
+          throw "Required file not found: $path"
+        }
+      }
+
+  - name: Install Pester
+    shell: pwsh
+    run: |
+      $ErrorActionPreference = "Stop"
+      & "./arm-ttk/GitHubWorkflow/Steps/InstallPester.ps1" `
+        -PesterMaxVersion $env:PESTER_MAX_VERSION
+      if ($LASTEXITCODE -and $LASTEXITCODE -ne 0) {
+        throw "Pester installation failed."
+      }
+
+  - name: Run ARM-TTK unit tests
+    id: tests
+    if: always()
+    continue-on-error: true
+    shell: pwsh
+    run: |
+      $ErrorActionPreference = "Stop"
+      $log = Join-Path $env:GITHUB_WORKSPACE `
+        "evidence/arm-ttk-tests.log"
+      $testExitCode = 0
+      $transcriptStarted = $false
+
+      try {
+        Start-Transcript -Path $log -Force | Out-Null
+        $transcriptStarted = $true
+
+        & "./arm-ttk/GitHubWorkflow/Steps/RunPester.ps1" `
+          -ModulePath $env:MODULE_PATH `
+          -PesterMaxVersion $env:PESTER_MAX_VERSION
+
+        if ($LASTEXITCODE -and $LASTEXITCODE -ne 0) {
+          $testExitCode = $LASTEXITCODE
+        }
+      }
+      catch {
+        $_ | Out-String | Add-Content $log
+        $testExitCode = 1
+      }
+      finally {
+        if ($transcriptStarted) {
+          Stop-Transcript | Out-Null
+        }
+      }
+
+      foreach ($name in @(
+        "arm-ttk.TestResults.xml",
+        "arm-ttk.Coverage.xml"
+      )) {
+        $source = Join-Path $env:GITHUB_WORKSPACE $name
+        if (Test-Path $source -PathType Leaf) {
+          Copy-Item $source evidence/
+        }
+      }
+
+      @{
+        test_scope = "ARM_TTK_UNIT_TESTS"
+        exit_code = $testExitCode
+        outcome = if ($testExitCode -eq 0) { "PASS" } else { "FAIL" }
+        completed_at_utc = [DateTime]::UtcNow.ToString("o")
+      } | ConvertTo-Json -Depth 5 |
+        Set-Content evidence/test-result.json -Encoding utf8
+
+      "exit_code=$testExitCode" >> $env:GITHUB_OUTPUT
+
+  - name: Generate SHA-256 manifest
+    if: always()
+    shell: pwsh
+    run: |
+      $ErrorActionPreference = "Stop"
+      $root = Join-Path $env:GITHUB_WORKSPACE "evidence"
+
+      if (-not (Test-Path $root -PathType Container)) {
+        throw "Evidence directory not found."
+      }
+
+      $manifestPath = Join-Path $root "sha256-manifest.txt"
+      $entries = Get-ChildItem $root -Recurse -File |
+        Where-Object { $_.FullName -ne $manifestPath } |
+        Sort-Object FullName |
+        ForEach-Object {
+          $hash = (Get-FileHash $_.FullName -Algorithm SHA256).
+            Hash.ToLowerInvariant()
+          $relative = [IO.Path]::GetRelativePath(
+            $root, $_.FullName
+          ).Replace('\', '/')
+          "$hash  $relative"
+        }
+
+      $entries | Set-Content $manifestPath -Encoding utf8
+
+  - name: Upload evidence artifact
+    if: always()
+    uses: actions/upload-artifact@v4
+    with:
+      name: xa-arm-ttk-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+      path: evidence/
+      if-no-files-found: error
+      retention-days: 90
+
+  - name: Enforce test result
+    if: always()
+    shell: pwsh
+    run: |
+      $resultPath = "evidence/test-result.json"
+      if (-not (Test-Path $resultPath -PathType Leaf)) {
+        throw "INCOMPLETE: test result was not produced."
+      }
+
+      $result = Get-Content $resultPath -Raw | ConvertFrom-Json
+      if ($result.outcome -ne "PASS" -or $result.exit_code -ne 0) {
+        throw "ARM-TTK validation failed or did not complete successfully."
+      }
+
 name: update-cache
 #on: workflow_dispatch
 on: 
