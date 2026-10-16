@@ -1,3 +1,32 @@
+name: XA-TRUST - ARM-TTK Validation
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: xa-arm-ttk-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  arm-ttk-tests:
+    name: ARM-TTK Unit Tests
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      # Inserir aqui as etapas de evidência,
+      # validação de caminhos, testes e publicação.
+
 
 name: XA-TRUST - ARM-TTK Validation
 
