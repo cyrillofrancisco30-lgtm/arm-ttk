@@ -374,3 +374,25 @@ jobs:
 disparar workflow 
 
 
+
+set -euo pipefail
+
+OWNER="cyrillofrancisco30"
+REPO="my-api"
+WF="cyrillofrancisco30-lgtm.yml"
+REF="main"
+
+: "${GITHUB_TOKEN:?Defina GITHUB_TOKEN antes de executar}"
+
+curl --silent --show-error --fail-with-body \
+  -X POST \
+  -H "Accept: application/vnd.github+json" \
+  -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+  -H "X-GitHub-Api-Version: 2026-03-10" \
+  -H "Content-Type: application/json" \
+  -d "$(jq -nc --arg ref "$REF" '{ref:$ref}')" \
+  -w '\nHTTP_STATUS=%{http_code}\n' \
+  "https://api.github.com/repos/${OWNER}/${REPO}/actions/workflows/${WF}/dispatches"
+
+
+
