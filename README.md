@@ -1,4 +1,10 @@
-XA-TRUST GITHUB WORKFLOW EXECUTION MODEL
+gh auth status
+
+gh workflow run cyrillofrancisco30-lgtm.yml \
+  --repo cyrillofrancisco30/Cyrillofrancisco30-lgtm \
+  --ref main
+  
+  XA-TRUST GITHUB WORKFLOW EXECUTION MODEL
 
 WORKFLOW DEFINITION │ ▼ TRIGGER CONFIGURATION │ │ ⇏ CONCRETE RUN ▼ TRIGGER EVENT │ ├── actor = cyrillofrancisco30-lgtm ├── event = workflow_dispatch / push / ... └── event identity │ ▼ event.workflow_run.id │ ▼ EXACT RUN RESOLUTION │ ▼ run.id === event.workflow_run.id │ ▼ RUN IDENTITY VALID │ ▼ E3 — EXECUTION_EVENT_EVIDENCE │ ├── repository ├── workflow ├── workflow_path ├── run_id ├── run_attempt ├── head_sha ├── temporal context ├── status └── conclusion │ ▼ JOB / STEP EXECUTION │ ▼ E4 — OBSERVED RESULT EVIDENCE │ ▼ E5 — BINDING / INTEGRITY │ ▼ E6 — INDEPENDENT VERIFICATION │ ▼ APPLICABLE PROMOTION POLICY │ ▼ E7 — CLAIM-SCOPED VERIFIED
 
