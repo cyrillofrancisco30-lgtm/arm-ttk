@@ -1,4 +1,4 @@
-ROZEN — XA-TRUST GITHUB WORKFLOW EXECUTION MODEL
+XA-TRUST GITHUB WORKFLOW EXECUTION MODEL
 
 WORKFLOW DEFINITION │ ▼ TRIGGER CONFIGURATION │ │ ⇏ CONCRETE RUN ▼ TRIGGER EVENT │ ├── actor = cyrillofrancisco30-lgtm ├── event = workflow_dispatch / push / ... └── event identity │ ▼ event.workflow_run.id │ ▼ EXACT RUN RESOLUTION │ ▼ run.id === event.workflow_run.id │ ▼ RUN IDENTITY VALID │ ▼ E3 — EXECUTION_EVENT_EVIDENCE │ ├── repository ├── workflow ├── workflow_path ├── run_id ├── run_attempt ├── head_sha ├── temporal context ├── status └── conclusion │ ▼ JOB / STEP EXECUTION │ ▼ E4 — OBSERVED RESULT EVIDENCE │ ▼ E5 — BINDING / INTEGRITY │ ▼ E6 — INDEPENDENT VERIFICATION │ ▼ APPLICABLE PROMOTION POLICY │ ▼ E7 — CLAIM-SCOPED VERIFIED
 
@@ -7,6 +7,61 @@ TRIGGER ≠ EXECUTION ≠ RESULT ≠ BINDING ≠ INDEPENDENT VERIFICATION ≠ CL
 disparar workflow
 
 E7 LOCAL CLAIM SET ↓ DEFINED GLOBAL SCOPE ↓ COVERAGE / COMPLETENESS ↓ DECLARED GLOBAL ↓ INDEPENDENT RECONSTRUCTION ↓ RECALCULATED GLOBAL ↓ EXACT MATCH ↓ INDEPENDENT GLOBAL VERIFICATION ↓ GLOBAL PROMOTION POLICY ↓ E8
+{
+"repository": "cyrillofrancisco30/Cyrillofrancisco30-lgtm",
+"workflow": "cyrillofrancisco30-lgtm.yml",
+"branch": "main",
+"status": "completed",
+"conclusion": "success",
+"run_id": "123456789",
+"run_url": "https://github.com/cyrillofrancisco30/Cyrillofrancisco30-lgtm/actions/runs/123456789"
+}
+
+gh api \
+  repos/cyrillofrancisco30/Cyrillofrancisco30-lgtm/actions/runs/123456789 \
+  --jq '{
+    id,
+    name,
+    path,
+    event,
+    head_branch,
+    head_sha,
+    status,
+    conclusion,
+    created_at,
+    run_started_at,
+    updated_at,
+    html_url
+  }'
+
+gh api \
+  repos/cyrillofrancisco30/Cyrillofrancisco30-lgtm/actions/runs/123456789/jobs \
+  --jq '.jobs[] | {
+    name,
+    status,
+    conclusion,
+    steps
+  }'
+
+  gh api \
+repos/cyrillofrancisco30/Cyrillofrancisco30-lgtm/actions/runs/123456789 \
+--jq '{
+id,
+name,
+path,
+event,
+head_branch,
+head_sha,
+status,
+conclusion,
+created_at,
+run_started_at,
+updated_at,
+html_url
+}'
+  
+
+
 
 cyrillofrancisco30-lgtm ⇏ WORKFLOW_SUCCESS
 
