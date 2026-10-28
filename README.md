@@ -1,5 +1,32 @@
 gh auth status
 
+gh repo view cyrillofrancisco30-lgtm/Xa-Finance-AI-
+
+gh workflow list \
+  --repo cyrillofrancisco30-lgtm/Xa-Finance-AI-
+
+
+gh workflow run ibm.yml \
+  --repo cyrillofrancisco30-lgtm/Xa-Finance-AI- \
+  --ref main
+
+
+gh run list \
+  --repo cyrillofrancisco30-lgtm/Xa-Finance-AI- \
+  --workflow ibm.yml \
+  --branch main \
+  --limit 5
+
+gh api \
+  repos/cyrillofrancisco30-lgtm/Xa-Finance-AI-/actions/runs/RUN_ID \
+  --jq '{
+    id, name, path, event, head_branch, head_sha,
+    run_attempt, status, conclusion,
+    created_at, run_started_at, updated_at, html_url
+  }'
+
+gh auth status
+
 gh workflow run cyrillofrancisco30-lgtm.yml \
   --repo cyrillofrancisco30/Cyrillofrancisco30-lgtm \
   --ref main
