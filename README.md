@@ -1,4 +1,231 @@
 
+XA-FINANCE-AI/
+│
+├── .github/
+│   └── workflows/
+│       ├── dod-zt-structural-validation.yml
+│       ├── dod-zt-python-tests.yml
+│       └── dod-zt-opa-tests.yml
+│
+├── docs/
+│   └── compliance/
+│       ├── XA-TRUST-DOD-ZT-CROSSWALK-001.md
+│       ├── XA-TRUST-DOD-ZT-CROSSWALK-001.csv
+│       ├── capability-acceptance-criteria.md
+│       ├── evidence-model.md
+│       └── implementation-limitations.md
+│
+├── policies/
+│   └── dod-zero-trust/
+│       ├── user/
+│       │   ├── 1.1-user-inventory.rego
+│       │   ├── 1.2-conditional-access.rego
+│       │   └── ...
+│       ├── device/
+│       │   └── ...
+│       ├── application-workload/
+│       │   └── ...
+│       ├── data/
+│       │   └── ...
+│       ├── network-environment/
+│       │   └── ...
+│       ├── automation-orchestration/
+│       │   └── ...
+│       └── visibility-analytics/
+│           └── ...
+│
+├── schemas/
+│   └── evidence/
+│       ├── execution.schema.json
+│       ├── provenance.schema.json
+│       ├── cryptographic-binding.schema.json
+│       ├── independent-verification.schema.json
+│       └── claim-promotion.schema.json
+│
+├── verifier/
+│   └── dod-zero-trust/
+│       ├── __init__.py
+│       ├── crosswalk.py
+│       ├── registry.py
+│       ├── evidence.py
+│       ├── promotion.py
+│       └── checks/
+│           ├── __init__.py
+│           ├── user.py
+│           ├── device.py
+│           ├── application.py
+│           ├── data.py
+│           ├── network.py
+│           ├── automation.py
+│           └── visibility.py
+│
+├── tests/
+│   └── dod-zero-trust/
+│       ├── test_crosswalk_consistency.py
+│       ├── test_registry_consistency.py
+│       ├── test_evidence_schemas.py
+│       ├── test_promotion_gates.py
+│       ├── test_1_user.py
+│       ├── test_2_device.py
+│       ├── test_3_application.py
+│       ├── test_4_data.py
+│       ├── test_5_network.py
+│       ├── test_6_automation.py
+│       └── test_7_visibility.py
+│
+├── examples/
+│   └── dod-zero-trust/
+│       ├── execution.example.json
+│       ├── provenance.example.json
+│       └── verification.example.json
+│
+├── requirements-dev.txt
+├── .gitignore
+└── README.md
+
+capability_id,pillar,pillar_name,capability_name,type,component_xa_trust,control_tecnico,artefato_evidencia,metodo_verificacao_independente,estado,lacuna_criterio_aceitacao
+
+
+
+NOT_ASSESSED
+
+
+Os schemas devem ter responsabilidades separadas.
+Etapa Arquivo Responsabilidade
+E3 execution.schema.json Identidade e contexto da execução
+E4 provenance.schema.json Origem, coleta e proveniência
+E5 cryptographic-binding.schema.json Hash, canonicalização e assinatura
+E6 independent-verification.schema.json Verificação independente
+E7 claim-promotion.schema.json 
+
+
+E3 — EXECUTION
+       |
+       v
+E4 — PROVENANCE
+       |
+       v
+E5 — CRYPTOGRAPHIC BINDING
+       |
+       v
+E6 — INDEPENDENT VERIFICATION
+       |
+       v
+POLICY + ACCEPTANCE CRITERIA
+       |
+       v
+E7 — VERIFIED(CLAIM-X)
+
+
+
+CAPABILITY_REGISTRY = {
+    "1.1": {
+        "pillar": "user",
+        "module": "user",
+        "function": "check_1_1",
+        "policy": "policies/dod-zero-trust/user/1.1-user-inventory.rego",
+    },
+    "1.2": {
+        "pillar": "user",
+        "module": "user",
+        "function": "check_1_2",
+        "policy": "policies/dod-zero-trust/user/1.2-conditional-access.rego",
+    },
+}
+
+
+from pathlib import Path
+import csv
+
+ROOT = Path(__file__).resolve().parents[2]
+
+DOC = ROOT / "docs/compliance/XA-TRUST-DOD-ZT-CROSSWALK-001.md"
+CSV_FILE = ROOT / "docs/compliance/XA-TRUST-DOD-ZT-CROSSWALK-001.csv"
+
+
+def load_csv():
+    with CSV_FILE.open(
+        encoding="utf-8-sig",
+        newline=""
+    ) as file:
+        return list(csv.DictReader(file))
+
+
+def test_no_false_conformance():
+    document = DOC.read_text(encoding="utf-8")
+
+    assert "NOT_CLAIMED" in document
+    assert "NOT_ESTABLISHED" in document
+
+
+def test_45_capabilities():
+    rows = load_csv()
+
+    assert len(rows) == 45
+
+    ids = [row["capability_id"].strip() for row in rows]
+
+    assert len(set(ids)) == 45
+    assert all(ids)
+
+
+def test_all_capabilities_initially_not_assessed():
+    rows = load_csv()
+
+    assert all(
+        row["estado"] == "NOT_ASSESSED"
+        for row in rows
+    )
+
+github/workflows/dod-zt-structural-validation.yml
+
+
+
+name: XA-TRUST DoD ZT Structural Validation
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  structural-validation:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install pytest jsonschema
+
+      - name: Validate crosswalk
+        run: |
+          pytest tests/dod-zero-trust/test_crosswalk_consistency.py
+          pytest tests/dod-zero-trust/test_registry_consistency.py
+
+
+def test_no_false_conformance():
+    # Garante que nenhum arquivo afirma conformidade DoD
+    assert "NOT_CLAIMED" in open("docs/compliance/XA-TRUST-DOD-ZT-CROSSWALK-001.md").read()
+    assert "NOT_ESTABLISHED" in open("docs/compliance/XA-TRUST-DOD-ZT-CROSSWALK-001.md").read()
+
+def test_45_capabilities():
+    assert len(load_csv()) == 45
+
+
+
+
 # Azure Resource Manager Template Toolkit (arm-ttk)
 
 The code in this repository can be used for analyzing and testing [Azure Resource Manager Templates](https://docs.microsoft.com/azure/templates/).  The tests will check a template or set of templates for coding best practices.  There are some checks for simple syntactical errors but the intent is not to re-implement tests or checks that are provided by the platform (e.g. the /validate api).  
