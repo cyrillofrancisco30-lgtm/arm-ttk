@@ -1,4 +1,40 @@
 
+#!/usr/bin/env bash
+set -euo pipefail
+
+: "${OWNER:?Defina OWNER}"
+: "${REPO:?Defina REPO}"
+: "${RUN_ID:?Defina RUN_ID}"
+
+OUT="github-evidence-${RUN_ID}"
+mkdir -p "$OUT"
+
+gh api "repos/${OWNER}/${REPO}/actions/runs/${RUN_ID}" > "$OUT/run.json"
+gh api "repos/${OWNER}/${REPO}/actions/runs/${RUN_ID}/jobs" > "$OUT/jobs.json"
+gh api "repos/${OWNER}/${REPO}/actions/runs/${RUN_ID}/logs" > "$OUT/run-logs.zip"
+
+jq -e --argjson id "$RUN_ID" \
+  '.id == $id and (.head_sha | type == "string") and (.status | type == "string")' \
+  "$OUT/run.json" >/dev/null
+
+jq -e '.jobs | type == "array"' "$OUT/jobs.json" >/dev/null
+
+unzip -t "$OUT/run-logs.zip"
+
+(
+  cd "$OUT"
+  sha256sum run.json jobs.json run-logs.zip > SHA256SUMS
+)
+
+echo "Coleta concluída; verificação independente ainda não estabelecida."
+
+export OWNER="cyrillofrancisco30-lgtm"
+export REPO="my-api"
+export RUN_ID="987654321"  # exemplo; confirme que esse ID existe no repositório
+
+./collect-evidence.sh
+
+
 # Azure Resource Manager Template Toolkit (arm-ttk)
 
 The code in this repository can be used for analyzing and testing [Azure Resource Manager Templates](https://docs.microsoft.com/azure/templates/).  The tests will check a template or set of templates for coding best practices.  There are some checks for simple syntactical errors but the intent is not to re-implement tests or checks that are provided by the platform (e.g. the /validate api).  
