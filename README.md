@@ -601,7 +601,15 @@ XA_TRUST_GITHUB_API_HOMOLOGATION_BATCH_2/
 │   └── verify.py
 └── homologation_report.md
 
+## XA-TRUST - Lógica Fail-Closed
 
+NO_REAL_EXECUTION -> NO_CLAIM
+NO_REAL_ARTIFACT -> NO_MANIFEST
+NO_AUTHORIZED_KEY -> NO_SIGNATURE
+NO_INDEPENDENT_VERIFICATION -> NO_E7
+
+Producer: só emite claim.json se houver execução real, artefato real do ARM-TTK e chave autorizada.
+Verifier: não confia no producer. Recalcula SHA-256, recanonicaliza com RFC 8785 e valida assinatura Ed25519 com trust anchor externo.
 
 
 
