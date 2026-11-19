@@ -1,0 +1,57 @@
+name: Evidence validation
+
+on:
+  workflow_dispatch:
+    inputs:
+      ruid:
+        description: Run unique ID
+        required: true
+  workflow_run:
+    workflows: ["Homologation runner"]
+    types: [completed]
+
+permissions:
+  contents: read
+  actions: read
+  id-token: write
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          pip install -r ci/requirements.txt
+
+      - name: Download evidence artifact
+        if: ${{ github.event_name == 'workflow_run' }}
+        uses: actions/download-artifact@v4
+        with:
+          name: evidence
+          path: evidence
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Validate evidence
+        env:
+          RUID: ${{ github.event_name == 'workflow_dispatch' && inputs.ruid || github.event.workflow_run.id }}
+          EXPECTED_COMMIT: ${{ github.event_name == 'workflow_dispatch' && github.sha || github.event.workflow_run.head_sha }}
+        run: |
+          echo "RUID=$RUID"
+          echo "EXPECTED_COMMIT=$EXPECTED_COMMIT"
+          if [ ! -f evidence/manifest.json ]; then
+            echo "manifest.json not found"
+            ls -R evidence || true
+            exit 1
+          fi
+          python -m ci.validate_evidence --ruid "$RUID" --expected-commit "$EXPECTED_COMMIT" --manifest evidence/manifest.json --output evidence/validated-graph.json
