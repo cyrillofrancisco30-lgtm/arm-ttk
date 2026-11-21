@@ -62,7 +62,7 @@ jobs:
       #   run: |
       #     curl -X POST ${{ secrets.XA_TRUST_URL }} \
       #       -H "Authorization: Bearer ${{ secrets.XA_TRUST_TOKEN }}" \
-      #       -H "Content-Type: application/json" \
+      #       -H "Content-Type: application/json" \ 
       #       --data @evidence/manifest.json
 
       - name: Upload evidence artifact
