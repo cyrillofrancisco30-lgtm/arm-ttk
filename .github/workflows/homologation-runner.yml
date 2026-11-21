@@ -62,13 +62,28 @@ jobs:
       #   run: |
       #     curl -X POST ${{ secrets.XA_TRUST_URL }} \
       #       -H "Authorization: Bearer ${{ secrets.XA_TRUST_TOKEN }}" \
-      #       -H "Content-Type: application/json" \ 
+      #       -H "Content-Type: application/json" \
       #       --data @evidence/manifest.json
+
+      - name: Checkout XA-TRUST Verifier (Opção A)
+        uses: actions/checkout@v4
+        with:
+          repository: cyrillofrancisco30-lgtm/xa-trust-verifier
+          path: xa-trust-verifier
+
+      - name: Homologar XA-TRUST Total (AEP)
+        run: |
+          pip install -q rfc8785
+          cd xa-trust-verifier
+          python verify_aep.py generate
+          echo "XA_TRUST_TOTAL=VERIFIED"
 
       - name: Upload evidence artifact
         uses: actions/upload-artifact@v4
         with:
           name: evidence
-          path: evidence/
+          path: |
+            evidence/
+            xa-trust-verifier/evidence_aep.json
           if-no-files-found: error
           retention-days: 30
